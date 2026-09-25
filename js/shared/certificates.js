@@ -8,7 +8,7 @@ export function printOcularCertificate(record) {
             <title>Certificate - ${escapeHTML(record.rnNo)}</title>
             <style>
                 body { font-family: sans-serif; padding: 2rem; }
-                h1 { color: #2563eb; }
+                h1 { color: #1878b8; }
             </style>
         </head>
         <body onload="window.print(); window.close();">
@@ -32,7 +32,7 @@ export function printInstallationRegister(record) {
             <title>Installation - ${escapeHTML(record.installationNo)}</title>
             <style>
                 body { font-family: sans-serif; padding: 2rem; }
-                h1 { color: #2563eb; }
+                h1 { color: #1878b8; }
             </style>
         </head>
         <body onload="window.print(); window.close();">
