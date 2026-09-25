@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EOMS</title>
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header id="app-header">
+    <div class="header-left">
+      <div class="logo">EOMS</div>
+    </div>
+    <div class="header-center" id="workspace-switcher-container"></div>
+    <div class="header-right">
+      <div id="notifications-container" style="position: relative; margin-right: 1.5rem; cursor: pointer;"></div>
+      <div id="profile-picker-container"></div>
+    </div>
+  </header>
+  
+  <main id="app-content">
+    <!-- Router renders views here -->
+  </main>
+  
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+:root {
+  --primary: #2563eb;
+  --bg-color: #f3f4f6;
+  --header-bg: #ffffff;
+  --text-main: #1f2937;
+  --border-color: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--header-bg);
+  padding: 0 1rem;
+  height: 60px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.header-left, .header-center, .header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-center {
+  flex: 1;
+  justify-content: center;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.workspace-switcher {
+  display: flex;
+  gap: 1rem;
+}
+
+.workspace-switcher a {
+  text-decoration: none;
+  color: #6b7280;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.workspace-switcher a.active {
+  background: #eff6ff;
+  color: var(--primary);
+}
+
+.workspace-switcher a:hover:not(.active) {
+  background: #f3f4f6;
+  color: var(--text-main);
+}
+
+.profile-picker select {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border-color);
+  font-size: 0.875rem;
+}
+
+#app-content {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.workspace-layout {
+  display: flex;
+  height: 100%;
+}
+
+.sidebar {
+  width: 250px;
+  background: #ffffff;
+  border-right: 1px solid var(--border-color);
+  padding: 1rem 0;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-nav a {
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  color: var(--text-main);
+  border-left: 3px solid transparent;
+}
+
+.sidebar-nav a:hover {
+  background: #f9fafb;
+}
+
+.sidebar-nav a.active {
+  background: #eff6ff;
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+
+.main-view {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+button {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: var(--primary);
+  color: white;
+  font-weight: 500;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+input, select, textarea {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  width: 100%;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.sidebar-category {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 600;
+  margin: 1.5rem 1.5rem 0.5rem 1.5rem;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-nav > .sidebar-category:first-child {
+  margin-top: 0.5rem;
+}
+
+@media print {
+  /* Hide main navigation and non-essential UI */
+  #app-header, .sidebar, #profile-picker-container, #notifications-container, .print-hide {
+    display: none !important;
+  }
+  
+  /* Reset layouts to standard document flow */
+  #app-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Modal adjustments */
+  #reports-modal, .print-modal-content {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    background: white !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  /* Make side-by-side reports stack on print to avoid squishing */
+  #reports-modal > div > div[style*='display: flex'] {
+    flex-direction: column !important;
+  }
+  
+  /* Page break rules */
+  .inspection-summary {
+    page-break-inside: avoid;
+    margin-bottom: 2rem;
+  }
+  
+  /* Remove box shadows and background colors for clean print */
+  * {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Custom Scrollbar for Desktop */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; 
+}
+
+
+table {
+  display: table;
+  overflow-x: auto;
+  white-space: nowrap;
+  width: 100%;
+}
+
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+}
+
+
+/* Skeleton Loading Animation */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  background: #f6f7f8;
+  background-image: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 0.75rem;
+  width: 100%;
+}
+
+.skeleton-text.short { width: 50%; }
+.skeleton-text.title { height: 24px; width: 40%; margin-bottom: 1.5rem; }
+
+.skeleton-card {
+  height: 100px;
+  margin-bottom: 1rem;
+}
+
+.skeleton-table-row {
+  height: 40px;
+  margin-bottom: 0.5rem;
+  border-radius: 0;
+}
+
