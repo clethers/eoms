@@ -53,9 +53,18 @@ body {
 }
 
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: bold;
   font-size: 1.25rem;
-  color: var(--primary);
+  color: var(--brand-blue);
+}
+
+.logo-mark {
+  height: 28px;
+  width: 28px;
+  object-fit: contain;
 }
 
 .workspace-switcher {
