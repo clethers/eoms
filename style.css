@@ -72,12 +72,12 @@ body {
 }
 
 .workspace-switcher a.active {
-  background: #eff6ff;
-  color: var(--primary);
+  background: var(--brand-green-soft);
+  color: var(--brand-green);
 }
 
 .workspace-switcher a:hover:not(.active) {
-  background: #f3f4f6;
+  background: var(--brand-blue-soft);
   color: var(--text-main);
 }
 
@@ -121,13 +121,13 @@ body {
 }
 
 .sidebar-nav a:hover {
-  background: #f9fafb;
+  background: var(--brand-blue-soft);
 }
 
 .sidebar-nav a.active {
-  background: #eff6ff;
-  color: var(--primary);
-  border-left-color: var(--primary);
+  background: var(--brand-green-soft);
+  color: var(--brand-green);
+  border-left-color: var(--brand-green);
 }
 
 .main-view {
