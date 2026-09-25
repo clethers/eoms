@@ -56,15 +56,17 @@ This phase applies app-wide immediately (it's a token/asset swap, low risk, and 
 
 ## 6. Phase 2 — Shared wizard shell
 
-**Scope:** `OcularFormView.js` (4 steps) and `InstallationFormView.js` (5 steps), which currently each hand-roll their own step-navigation logic.
+**Scope:** `OcularFormView.js` (4 steps) and `InstallationFormView.js` (5 steps, with a step-0 record picker before the wizard proper), which currently each hand-roll their own step-navigation logic, including an identical ~15-line nav-bar block and no per-step validation at all today (only native HTML `required` firing on final submit).
 
-Extract a shared `js/shared/formWizard.js` that owns:
-- A sticky step-progress indicator (the pill/dot row from the mockup).
-- A fixed, thumb-reachable next/back bar pinned to the bottom of the viewport.
-- Per-step validation gating: "Next"/"Submit" stay disabled until the current step's required fields are complete — this is also where Phase 4's "fewer mistakes" guardrails attach (Section 7.1).
-- A visible draft-saved/autosave-failed indicator.
+Extract `js/shared/formWizard.js`, a small `FormWizard` class owning exactly three things — nav chrome and the validation gate, nothing else:
 
-Each view keeps its own step content, field definitions, and business logic; the wizard only owns navigation chrome and the validation gate. This is presentational — no changes to what gets written to `ocularInspections`/`installationRecords` in IndexedDB.
+- `renderProgressBar(currentStep)` — the sticky top step-dot row from the Phase 1 mockup (green = current/completed, neutral = upcoming), using the Phase 1 brand tokens.
+- `renderNavBar(currentStep, { showPrev, nextLabel, showSubmit, leftExtraHtml, rightExtraHtml, draftStatus })` — a bar **pinned to the bottom of the viewport** (a real layout change: `position: fixed`, with bottom padding added to the scrollable content area so nothing hides behind it). `leftExtraHtml`/`rightExtraHtml` are raw HTML slots each view fills with its own one-off buttons — Ocular's "Save Draft" on step 4, Installation's always-visible "Preview Ocular Inspection" and its step-1 "Cancel" (replacing "Previous"). `draftStatus` renders the saved/autosave-failed indicator only when a view passes one in.
+- `bindNav(container, { onPrev, onNext, onSubmit, validateStep })` — wires the buttons. On "Next", it calls the view's own `validateStep(stepNumber)` (each view defines its required fields — only it knows them); if that returns errors, Next is blocked, the specific empty/invalid fields get an inline error state, and a summary appears at the nav bar. Nothing advances silently.
+
+**What stays entirely in each view, unchanged in shape:** `renderStep()` content, `saveData()` field-scraping, and all business logic — including Ocular's NEMA-3R-choice modal (the view's own `onNext` callback shows the modal instead of advancing, exactly as it does today; the wizard needs no special hook for this) and Installation's step-0 record-picker screen (rendered with zero wizard chrome, before the wizard mounts at all, exactly as today).
+
+**Deliberately not changed:** Installation gains no draft/autosave behavior — it keeps writing only on final submit, as it does today. The draft-saved indicator lights up only for Ocular, which already has `saveOcularDraft`. This is presentational — no changes to what gets written to `ocularInspections`/`installationRecords` in IndexedDB.
 
 ## 7. Phase 3 — Touch interaction upgrades
 
