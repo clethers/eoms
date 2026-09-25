@@ -85,11 +85,11 @@ export default class CalendarView {
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             const isToday = todayStr === dateStr;
-            const bg = isToday ? '#eff6ff' : 'white';
+            const bg = isToday ? 'var(--brand-blue-soft)' : 'white';
 
             html += `
                 <div style="background: ${bg}; min-height: 120px; padding: 0.5rem; display: flex; flex-direction: column;">
-                    <div style="text-align: right; font-size: 0.9rem; font-weight: ${isToday ? 'bold' : 'normal'}; color: ${isToday ? '#2563eb' : '#64748b'}; margin-bottom: 0.5rem;">${day}</div>
+                    <div style="text-align: right; font-size: 0.9rem; font-weight: ${isToday ? 'bold' : 'normal'}; color: ${isToday ? 'var(--brand-blue)' : '#64748b'}; margin-bottom: 0.5rem;">${day}</div>
             `;
 
             dayOculars.forEach(o => {
