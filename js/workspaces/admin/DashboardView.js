@@ -25,9 +25,9 @@ export default class DashboardView {
         try {
             const metrics = await fetchDashboardMetrics();
             container.innerHTML = `
-                <div style="background:#eff6ff; padding: 1.5rem; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
-                    <h3 style="font-size: 2rem; margin: 0; color: #1e3a8a;">${metrics.totalInspections}</h3>
-                    <p style="margin: 0.5rem 0 0; color: #3b82f6;">Total Inspections</p>
+                <div style="background:var(--brand-blue-soft); padding: 1.5rem; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
+                    <h3 style="font-size: 2rem; margin: 0; color: var(--brand-blue);">${metrics.totalInspections}</h3>
+                    <p style="margin: 0.5rem 0 0; color: var(--brand-blue);">Total Inspections</p>
                 </div>
                 <div style="background:#fffbeb; padding: 1.5rem; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
                     <h3 style="font-size: 2rem; margin: 0; color: #92400e;">${metrics.pendingQA}</h3>
