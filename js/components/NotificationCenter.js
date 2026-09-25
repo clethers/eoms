@@ -29,7 +29,7 @@ export async function renderNotificationCenter(containerId) {
                 ${notifications.length === 0 ? '<p style="padding: 1rem; margin: 0; text-align: center; color: #666;">No notifications</p>' : ''}
                 <ul style="list-style: none; margin: 0; padding: 0;">
                     ${notifications.map(n => `
-                        <li data-id="${n.id}" class="notif-item" style="padding: 1rem; border-bottom: 1px solid #eee; cursor: pointer; background: ${n.isRead ? 'white' : '#eff6ff'};">
+                        <li data-id="${n.id}" class="notif-item" style="padding: 1rem; border-bottom: 1px solid #eee; cursor: pointer; background: ${n.isRead ? 'white' : 'var(--brand-blue-soft)'};">
                             <p style="margin: 0; font-size: 0.9rem;">${escapeHTML(n.message)}</p>
                             <small style="color: #64748b;">${new Date(n.createdAt).toLocaleString()}</small>
                         </li>
