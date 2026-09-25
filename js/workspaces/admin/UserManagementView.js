@@ -140,7 +140,7 @@ export default class UserManagementView {
                                 </div>
                                 <div style="display:flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
                                     <button type="button" id="staff-close-btn" style="background: #e2e8f0; color: #333;">Close</button>
-                                    <button type="submit" style="background: #3b82f6; color: white;">Save Changes</button>
+                                    <button type="submit" style="background: var(--brand-green); color: white;">Save Changes</button>
                                 </div>
                             </form>
                         </div>

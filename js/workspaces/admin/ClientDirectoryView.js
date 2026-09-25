@@ -41,7 +41,7 @@ export default class ClientDirectoryView {
                                 <td>${escapeHTML(i.locationAddress || 'N/A')}</td>
                                 <td>${escapeHTML(i.dateTime || 'N/A')}</td>
                                 <td>
-                                    <button class="print-btn" data-id="${i.id}" title="Print Certificate" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; background: #3b82f6; color: white;">🖨️</button>
+                                    <button class="print-btn" data-id="${i.id}" title="Print Certificate" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; background: var(--brand-green); color: white;">🖨️</button>
                                     <button class="archive-btn" data-id="${i.id}" title="Archive Record" style="background-color: #ef4444; color: white; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">🗑️</button>
                                 </td>
                             </tr>

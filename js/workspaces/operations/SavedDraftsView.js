@@ -45,7 +45,7 @@ export default class SavedDraftsView {
                                     <td><span style="padding: 0.2rem 0.5rem; background: #e2e8f0; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(i.status || 'DRAFT'))}</span></td>
                                     <td>
                                         <button data-action="preview" data-id="${i.id}" title="View Summary" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">👁️</button>
-                                        <button data-action="edit" data-id="${i.id}" title="Edit" style="margin-left: 0.5rem; background: #3b82f6; color: white; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">✏️</button>
+                                        <button data-action="edit" data-id="${i.id}" title="Edit" style="margin-left: 0.5rem; background: var(--brand-green); color: white; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">✏️</button>
                                     </td>
                                 </tr>
                             `).join('')}

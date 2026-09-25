@@ -327,7 +327,7 @@ export default class OcularFormView {
                 <!-- Left Column -->
                 <div style="flex: 1; min-width: 300px;">
                     <div class="form-group" style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
-                        <label style="font-size: 1.1rem; color: #1e3a8a; border-bottom: 1px solid #bfdbfe; padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Electrical Specifications</label>
+                        <label style="font-size: 1.1rem; color: var(--brand-blue); border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Electrical Specifications</label>
                         <div style="margin-bottom: 1rem;">
                             <label>Voltage System</label>
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
@@ -364,7 +364,7 @@ export default class OcularFormView {
                 <!-- Right Column -->
                 <div style="flex: 1; min-width: 300px;">
                     <div class="form-group" style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
-                        <label style="font-size: 1.1rem; color: #1e3a8a; border-bottom: 1px solid #bfdbfe; padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Enclosure & Terminals</label>
+                        <label style="font-size: 1.1rem; color: var(--brand-blue); border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Enclosure & Terminals</label>
                         ${!isNema ? `
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                 <div class="form-group" style="margin: 0;"><label>Breaker Brand/Type</label><select name="breakerBrandType">${brandOptions}</select></div>
@@ -498,7 +498,7 @@ export default class OcularFormView {
             </div>
             
             <div style="text-align: right; margin-bottom: 2rem;">
-                <button type="button" id="download-photos-btn" style="background: #3b82f6;">Download Photos</button>
+                <button type="button" id="download-photos-btn" style="background: var(--brand-green);">Download Photos</button>
             </div>
 
             <h3>Works & Sign-off</h3>

@@ -57,7 +57,7 @@ export default class AssignedQueueView {
                                     <td style="padding: 0.5rem;">
                                         ${isLocked 
                                             ? `<button disabled title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px;">🔒</button>` 
-                                            : `<button class="start-inspection-btn" data-id="${i.id}" data-rn="${escapeHTML(i.rnNo)}" title="Start Inspection" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; background-color: #3b82f6; color: white;">📝</button>`
+                                            : `<button class="start-inspection-btn" data-id="${i.id}" data-rn="${escapeHTML(i.rnNo)}" title="Start Inspection" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; background-color: var(--brand-green); color: white;">📝</button>`
                                         }
                                     </td>
                                 </tr>

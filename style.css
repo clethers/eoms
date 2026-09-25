@@ -4,6 +4,7 @@
 
   --brand-green: #4c8c2a;
   --brand-green-dark: #3f7422;
+  --brand-green-darker: #325d1a;
   --brand-green-soft: #e3efd6;
   --brand-blue: #1878b8;
   --brand-blue-soft: #dcecf7;
@@ -40,6 +41,8 @@ body {
   height: 60px;
   border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
+  position: relative;
+  z-index: 3000;
 }
 
 .header-left, .header-center, .header-right {
@@ -82,7 +85,7 @@ body {
 
 .workspace-switcher a.active {
   background: var(--brand-green-soft);
-  color: var(--brand-green);
+  color: var(--brand-green-dark);
 }
 
 .workspace-switcher a:hover:not(.active) {
@@ -135,7 +138,7 @@ body {
 
 .sidebar-nav a.active {
   background: var(--brand-green-soft);
-  color: var(--brand-green);
+  color: var(--brand-green-dark);
   border-left-color: var(--brand-green);
 }
 
@@ -159,13 +162,13 @@ button {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 0.25rem;
-  background: var(--brand-green);
+  background: var(--brand-green-dark);
   color: white;
   font-weight: 500;
 }
 
 button:hover {
-  background: var(--brand-green-dark);
+  background: var(--brand-green-darker);
 }
 
 input, select, textarea {

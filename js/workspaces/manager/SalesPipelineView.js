@@ -138,7 +138,7 @@ export default class SalesPipelineView {
                                 <td>
                                     <button class="profile-btn" data-id="${l.id}" title="View CRM Profile" style="background-color: #6366f1; color: white; margin-right: 0.5rem; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">👤</button>
                                     ${l.ocularId ? `<button class="view-reports-btn" data-id="${l.id}" title="View Project Reports" style="background-color: #f59e0b; color: white; margin-right: 0.5rem; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">📋</button>` : ''}
-                                    ${!l.ocularId ? `<button class="dispatch-btn" data-id="${l.id}" title="Dispatch Ocular" style="background-color: #3b82f6; color: white; margin-right: 0.5rem; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">🚚</button>` : ''}
+                                    ${!l.ocularId ? `<button class="dispatch-btn" data-id="${l.id}" title="Dispatch Ocular" style="background-color: var(--brand-green); color: white; margin-right: 0.5rem; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">🚚</button>` : ''}
                                     ${l.stage === 'SITE_VISIT_COMPLETED' ? `<button class="quote-btn" data-id="${l.id}" title="Generate Quote" style="background-color: #8b5cf6; color: white; margin-right: 0.5rem; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">💰</button>` : ''}
                                     ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn" data-id="${l.id}" title="Dispatch Install" style="background-color: #10b981; color: white; margin-right: 0.5rem; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">🛠️</button>` : ''}
                                 </td>
@@ -153,7 +153,7 @@ export default class SalesPipelineView {
             <div id="reports-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
                 <div class="print-modal-content" style="background: white; padding: 2rem; border-radius: 8px; width: 900px; max-width: 95vw; max-height: 90vh; overflow-y: auto; position: relative;">
                     <div class="print-hide" style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem;">
-                        <button type="button" id="print-reports-btn" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Print / PDF📋</button>
+                        <button type="button" id="print-reports-btn" style="background: var(--brand-green); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Print / PDF📋</button>
                         <button type="button" id="close-reports-btn" style="background: #e2e8f0; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Close📋</button>
                     </div>
                     <h2 style="margin-top: 0;">Project Reports</h2>
@@ -446,7 +446,7 @@ export default class SalesPipelineView {
                                     <button type="button" id="crm-archive-btn" style="background: #ef4444; color: white;">Archive Lead📋</button>
                                     <div style="display: flex; gap: 1rem;">
                                         <button type="button" id="crm-close-btn" style="background: #e2e8f0; color: #333;">Close📋</button>
-                                        <button type="submit" style="background: #3b82f6; color: white;">Save Changes📋</button>
+                                        <button type="submit" style="background: var(--brand-green); color: white;">Save Changes📋</button>
                                     </div>
                                 </div>
                             </form>
@@ -523,7 +523,7 @@ export default class SalesPipelineView {
                             </div>
                             <div style="display:flex; justify-content:flex-end; gap: 1rem; margin-top: 1.5rem;">
                                 <button id="dispatch-cancel" style="background: #e2e8f0; color: #333;">Cancel📋</button>
-                                <button id="dispatch-confirm" style="background: #3b82f6; color: white;">Dispatch📋</button>
+                                <button id="dispatch-confirm" style="background: var(--brand-green); color: white;">Dispatch📋</button>
                             </div>
                         </div>
                     `;

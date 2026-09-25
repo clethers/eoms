@@ -366,13 +366,13 @@ export default class InstallationFormView {
             <h3>Summary & Sign-off</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
                 <div class="form-group" style="margin: 0; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
-                    <label style="font-size: 1.1rem; border-bottom: 1px solid #bfdbfe; padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Installer Name & Signature</label>
+                    <label style="font-size: 1.1rem; border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Installer Name & Signature</label>
                     <input type="text" name="installerName" value="${this.formData.installerName || ''}" placeholder="Enter Installer Name" required>
                     <canvas id="installer-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; margin-top: 1rem; width: 100%; border-radius: 4px; background: white;"></canvas>
                     <button type="button" id="clear-installer" style="margin-top: 1rem; width: 100%; background: #ef4444;">Clear Signature</button>
                 </div>
                 <div class="form-group" style="margin: 0; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
-                    <label style="font-size: 1.1rem; border-bottom: 1px solid #bfdbfe; padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Client Rep Name & Signature</label>
+                    <label style="font-size: 1.1rem; border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Client Rep Name & Signature</label>
                     <input type="text" name="clientRepName" value="${this.formData.clientRepName || ''}" placeholder="Enter Client Rep Name" required>
                     <canvas id="clientrep-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; margin-top: 1rem; width: 100%; border-radius: 4px; background: white;"></canvas>
                     <button type="button" id="clear-clientrep" style="margin-top: 1rem; width: 100%; background: #ef4444;">Clear Signature</button>
