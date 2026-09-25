@@ -57,9 +57,9 @@ export default class AnalyticsDashboardView {
 
             container.innerHTML = `
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
-                    <div style="background: #eff6ff; padding: 1.5rem; border-radius: 8px; border: 1px solid #bfdbfe; text-align: center;">
-                        <h3 style="margin: 0; color: #1e3a8a; font-size: 1rem;">Total Sales Leads</h3>
-                        <div style="font-size: 2.5rem; font-weight: bold; color: #2563eb; margin-top: 0.5rem;">${totalLeads}</div>
+                    <div style="background: var(--brand-blue-soft); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(24,120,184,0.35); text-align: center;">
+                        <h3 style="margin: 0; color: var(--brand-blue); font-size: 1rem;">Total Sales Leads</h3>
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--brand-blue); margin-top: 0.5rem;">${totalLeads}</div>
                     </div>
                     <div style="background: #ecfdf5; padding: 1.5rem; border-radius: 8px; border: 1px solid #a7f3d0; text-align: center;">
                         <h3 style="margin: 0; color: #064e3b; font-size: 1rem;">Completed Installations</h3>
