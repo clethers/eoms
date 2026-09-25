@@ -42,7 +42,7 @@ body {
   border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
   position: relative;
-  z-index: 3000;
+  z-index: 900;
 }
 
 .header-left, .header-center, .header-right {
