@@ -791,6 +791,41 @@ td > select, td > input:not([type="checkbox"]):not([type="radio"]) { margin: 0; 
   .main-view td { white-space: normal; }
 }
 
+/* Field grid: keeps the inline grid-template (the responsive pass collapses it by
+   attribute) but gives every field one height and aligns controls on a shared bottom edge */
+.field-grid > .form-group { margin: 0; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.field-grid > .form-group:has(> input:not([type="radio"]):not([type="checkbox"]), > select, > textarea) { justify-content: flex-end; }
+.field-grid > .form-group > input, .field-grid > .form-group > select,
+.field-grid > .form-group > textarea { margin: 0; }
+.field-grid > .form-group > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+.field-grid > .form-group > select { height: var(--control-h); }
+.field-grid > .form-group > textarea { min-height: var(--control-h); }
+.field-grid > .form-group > textarea[rows="1"], .field-grid > .form-group > textarea.control-h { height: var(--control-h); resize: vertical; }
+
+/* Multi-step form navigation: back/cancel on the left, forward actions on the right */
+.form-nav {
+  display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+  justify-content: space-between; margin-top: 1.5rem;
+}
+.form-nav__start, .form-nav__end { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.form-nav__end { margin-left: auto; }
+.form-nav__start:empty { display: none; }
+.form-nav button { height: var(--control-h); white-space: nowrap; }
+
+/* Signature pad actions: same spacing under every pad */
+.form-group.sig-field > input { margin: 0.25rem 0 0.5rem; }
+.sig-actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+.sig-actions > button { height: var(--control-h); }
+
+/* Radios/checkboxes on desktop: sit inline before their label text instead of full-width
+   above it (touch widths are already handled by the responsive pass) */
+@media screen and (min-width: 1025px) {
+  input[type="checkbox"], input[type="radio"] { width: auto; margin: 0 0.4rem 0 0; vertical-align: middle; }
+  label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) {
+    display: inline-flex; align-items: center; min-height: 1.75rem; margin-right: 1rem;
+  }
+}
+
 /* Modal / form footers */
 .modal-actions {
   display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
@@ -805,5 +840,7 @@ td > select, td > input:not([type="checkbox"]):not([type="radio"]) { margin: 0; 
   .form-row-end { flex-wrap: wrap; flex-basis: 100%; }
   .form-row > button, .form-row-end > button { flex: 1 1 auto; }
   .toolbar > input, .toolbar > select { flex-basis: 100%; }
+  .form-nav, .form-nav__start, .form-nav__end { width: 100%; }
+  .form-nav button { flex: 1 1 auto; }
 }
 /* ===== end alignment pass ===== */

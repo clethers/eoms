@@ -31,7 +31,7 @@ export function buildInstallationSummaryHtml(item) {
                 </div>
                 <div>
                     <p>Client Rep</p>
-                    ${item.clientSigImg ? `<img src="${item.clientSigImg}" style="max-width: 150px; border: 1px solid #ccc;"/>` : 'No signature'}
+                    ${(item.clientRepSigImg || item.clientSigImg) ? `<img src="${item.clientRepSigImg || item.clientSigImg}" style="max-width: 150px; border: 1px solid #ccc;"/>` : 'No signature'}
                 </div>
             </div>
             ${photos.length > 0 ? `

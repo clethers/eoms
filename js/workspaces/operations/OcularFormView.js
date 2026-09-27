@@ -57,11 +57,13 @@ export default class OcularFormView {
                 <div style="flex: 1; display: flex; flex-direction: column;">
                     ${content}
                 </div>
-                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-                    ${this.step > 1 ? '<button type="button" id="prev-btn">Previous</button>' : ''}
-                    ${this.step === 4 ? '<button type="button" id="save-draft-btn">Save Draft</button>' : ''}
-                    ${this.step < 4 ? '<button type="button" id="next-btn">Next</button>' : ''}
-                    ${this.step === 4 ? '<button type="submit" id="submit-btn" style="background-color: #10b981; color: white;">Submit for Approval</button>' : ''}
+                <div class="form-nav">
+                    <div class="form-nav__start">${this.step > 1 ? '<button type="button" id="prev-btn">Previous</button>' : ''}</div>
+                    <div class="form-nav__end">
+                        ${this.step === 4 ? '<button type="button" id="save-draft-btn">Save Draft</button>' : ''}
+                        ${this.step < 4 ? '<button type="button" id="next-btn">Next</button>' : ''}
+                        ${this.step === 4 ? '<button type="submit" id="submit-btn" style="background-color: #10b981; color: white;">Submit for Approval</button>' : ''}
+                    </div>
                 </div>
             </form>
         `;
@@ -233,15 +235,15 @@ export default class OcularFormView {
     renderStep1() {
         const scopeOptions = this.scopes.map(s => `<option value="${s.itemName}" ${this.formData.scopeOfWorks === s.itemName ? 'selected' : ''}>${s.itemName}</option>`).join('');
         return `
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
-                <div class="form-group" style="margin: 0;"><label>Client Name *</label><input type="text" name="clientName" value="${this.formData.clientName || ''}" required></div>
-                <div class="form-group" style="margin: 0;"><label>Contact No</label><input type="text" name="contactNo" value="${this.formData.contactNo || ''}"></div>
-                <div class="form-group" style="margin: 0;"><label>RN No *</label><input type="text" name="rnNo" value="${this.formData.rnNo || ''}" required></div>
-                <div class="form-group" style="margin: 0;"><label>Installation No *</label><input type="text" name="installationNo" value="${this.formData.installationNo || ''}" required></div>
+            <div class="field-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="form-group"><label>Client Name *</label><input type="text" name="clientName" value="${this.formData.clientName || ''}" required></div>
+                <div class="form-group"><label>Contact No</label><input type="text" name="contactNo" value="${this.formData.contactNo || ''}"></div>
+                <div class="form-group"><label>RN No *</label><input type="text" name="rnNo" value="${this.formData.rnNo || ''}" required></div>
+                <div class="form-group"><label>Installation No *</label><input type="text" name="installationNo" value="${this.formData.installationNo || ''}" required></div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
-                <div class="form-group" style="margin: 0;">
+            <div class="field-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="form-group">
                     <label>Scope of Works</label>
                     <select name="scopeOfWorks">
                         <option value="Site Inspection" ${this.formData.scopeOfWorks === 'Site Inspection' ? 'selected' : ''}>Site Inspection</option>
@@ -251,7 +253,7 @@ export default class OcularFormView {
                         ${scopeOptions}
                     </select>
                 </div>
-                <div class="form-group" style="margin: 0;">
+                <div class="form-group">
                     <label>Type of Residency *</label>
                     <select name="typeOfResidency" required>
                         <option value="Residential" ${this.formData.typeOfResidency === 'Residential' ? 'selected' : ''}>Residential</option>
@@ -261,7 +263,7 @@ export default class OcularFormView {
                 </div>
                 <div class="form-group" style="margin: 0; grid-column: span 2;">
                     <label>Location Address *</label>
-                    <textarea name="locationAddress" id="locationAddress" required rows="2" style="height: 42px;">${this.formData.locationAddress || ''}</textarea>
+                    <textarea name="locationAddress" id="locationAddress" class="control-h" required rows="2">${this.formData.locationAddress || ''}</textarea>
                 </div>
             </div>
 
@@ -362,9 +364,9 @@ export default class OcularFormView {
         const poleOptions = ['Single Pole (1P)', 'Double Pole (2P)', 'Three Pole (3P)', 'Four-Pole (4P)'].map(p => `<option value="${p}">${p}</option>`).join('');
         
         return `
-            <div style="display:flex; justify-content:space-between; margin-bottom: 1rem;">
+            <div class="page-header">
                 <h3>${isNema ? 'NEMA 3R Enclosure' : 'Main Distribution Panelboard'}</h3>
-                <button type="button" id="btn-change-feeder" style="font-size:0.8rem;">Change Feeder Path</button>
+                <button type="button" id="btn-change-feeder" style="height: var(--control-h);">Change Feeder Path</button>
             </div>
             
             <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
@@ -383,20 +385,20 @@ export default class OcularFormView {
                         </div>
 
                         ${!isNema ? `
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <div class="form-group" style="margin: 0;"><label>Main Breaker Rating</label>
+                            <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group"><label>Main Breaker Rating</label>
                                     <select name="mainBreaker">
                                         <option value="40A">40A</option><option value="60A">60A</option><option value="80A">80A</option><option value="100A">100A</option>
                                     </select>
                                 </div>
-                                <div class="form-group" style="margin: 0;"><label>No. of Branches</label><input type="number" name="noOfBranches" value="${this.formData.noOfBranches || 0}"></div>
+                                <div class="form-group"><label>No. of Branches</label><input type="number" name="noOfBranches" value="${this.formData.noOfBranches || 0}"></div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                                <div class="form-group" style="margin: 0;"><label>Spare Breaker (40 AT, 2P)?</label>
+                            <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                <div class="form-group"><label>Spare Breaker (40 AT, 2P)?</label>
                                     <label><input type="radio" name="spareBreaker" value="YES" ${this.formData.spareBreaker !== 'NO' ? 'checked' : ''}> YES</label>
                                     <label><input type="radio" name="spareBreaker" value="NO" ${this.formData.spareBreaker === 'NO' ? 'checked' : ''}> NO</label>
                                 </div>
-                                <div class="form-group" style="margin: 0;"><label>Space Provision?</label>
+                                <div class="form-group"><label>Space Provision?</label>
                                     <label><input type="radio" name="spaceProvision" value="YES" ${this.formData.spaceProvision !== 'NO' ? 'checked' : ''}> YES</label>
                                     <label><input type="radio" name="spaceProvision" value="NO" ${this.formData.spaceProvision === 'NO' ? 'checked' : ''}> NO</label>
                                 </div>
@@ -410,29 +412,29 @@ export default class OcularFormView {
                     <div class="form-group" style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
                         <label style="font-size: 1.1rem; color: var(--brand-blue); border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Enclosure & Terminals</label>
                         ${!isNema ? `
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <div class="form-group" style="margin: 0;"><label>Breaker Brand/Type</label><select name="breakerBrandType">${brandOptions}</select></div>
-                                <div class="form-group" style="margin: 0;"><label>Breaker Mounting</label><select name="breakerMounting">${mountingOptions}</select></div>
+                            <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group"><label>Breaker Brand/Type</label><select name="breakerBrandType">${brandOptions}</select></div>
+                                <div class="form-group"><label>Breaker Mounting</label><select name="breakerMounting">${mountingOptions}</select></div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                                <div class="form-group" style="margin: 0;"><label>Breaker Design</label><select name="breakerDesign">${designOptions}</select></div>
-                                <div class="form-group" style="margin: 0;"><label>Breaker Pole</label><select name="breakerPole">${poleOptions}</select></div>
+                            <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                <div class="form-group"><label>Breaker Design</label><select name="breakerDesign">${designOptions}</select></div>
+                                <div class="form-group"><label>Breaker Pole</label><select name="breakerPole">${poleOptions}</select></div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                                <div class="form-group" style="margin: 0;"><label>Grounding System?</label>
+                            <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                <div class="form-group"><label>Grounding System?</label>
                                     <label><input type="radio" name="groundingSystem" value="YES" ${this.formData.groundingSystem === 'YES' ? 'checked' : ''}> YES</label>
                                     <label><input type="radio" name="groundingSystem" value="NO" ${this.formData.groundingSystem !== 'YES' ? 'checked' : ''}> NO</label>
                                 </div>
-                                <div class="form-group" style="margin: 0;"><label>Grounding Rod Location (if NO)</label><textarea name="groundingRodLocation" rows="1">${this.formData.groundingRodLocation || ''}</textarea></div>
+                                <div class="form-group"><label>Grounding Rod Location (if NO)</label><textarea name="groundingRodLocation" rows="1">${this.formData.groundingRodLocation || ''}</textarea></div>
                             </div>
                         ` : `
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <div class="form-group" style="margin: 0;"><label>NEMA 3R Breaker Rating</label><input type="text" name="nema3rBreaker" value="${this.formData.nema3rBreaker || ''}" placeholder="e.g. 40A 2P 230V"></div>
-                                <div class="form-group" style="margin: 0;"><label>NEMA 3R Brand/Type</label><select name="nema3rBrandType">${brandOptions}</select></div>
+                            <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group"><label>NEMA 3R Breaker Rating</label><input type="text" name="nema3rBreaker" value="${this.formData.nema3rBreaker || ''}" placeholder="e.g. 40A 2P 230V"></div>
+                                <div class="form-group"><label>NEMA 3R Brand/Type</label><select name="nema3rBrandType">${brandOptions}</select></div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                                <div class="form-group" style="margin: 0;"><label>NEMA 3R Mounting</label><select name="nema3rMounting">${mountingOptions}</select></div>
-                                <div class="form-group" style="margin: 0;"><label>NEMA 3R Design</label><select name="nema3rDesign">${designOptions}</select></div>
+                            <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                <div class="form-group"><label>NEMA 3R Mounting</label><select name="nema3rMounting">${mountingOptions}</select></div>
+                                <div class="form-group"><label>NEMA 3R Design</label><select name="nema3rDesign">${designOptions}</select></div>
                             </div>
                             <div class="form-group" style="margin-top: 1rem;"><label>NEMA 3R Pole</label><select name="nema3rPole">${poleOptions}</select></div>
                         `}
@@ -541,13 +543,15 @@ export default class OcularFormView {
                 ${this.renderPhotoSlot('ev_charging_location', 'EV Charging Location')}
             </div>
             
-            <div style="text-align: right; margin-bottom: 2rem;">
+            <div class="modal-actions" style="margin: 0 0 2rem;">
                 <button type="button" id="download-photos-btn" style="background: var(--brand-green);">Download Photos</button>
             </div>
 
             <h3>Works & Sign-off</h3>
+            <div class="form-stack" style="margin-top: 0.75rem;">
             <div class="form-group"><label>Retrofitting Work</label><input type="text" name="workRetrofitting" value="${this.formData.workRetrofitting || ''}"></div>
             <div class="form-group"><label>New Installation</label><input type="text" name="workNewInstallation" value="${this.formData.workNewInstallation || ''}"></div>
+            </div>
             
             <div style="border: 1px solid #ccc; padding: 1rem; margin-top: 1rem; background: #fafafa;">
                 <h4>Executive Audit Summary</h4>
@@ -557,17 +561,17 @@ export default class OcularFormView {
                 <p>NEMA 3R: ${this.formData.hasNema3r || 'NO'}</p>
             </div>
 
-            <div class="form-group" style="margin-top: 1rem;">
+            <div class="form-group sig-field" style="margin-top: 1rem;">
                 <label>Inspector Name & Signature</label>
                 <input type="text" name="inspectedByName" value="${this.formData.inspectedByName || ''}" placeholder="Inspector Name" required>
-                <canvas id="inspector-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; margin-top:0.5rem;"></canvas>
-                <button type="button" id="clear-inspector" style="margin-top: 0.5rem;">Clear</button>
+                <canvas id="inspector-pad" width="400" height="200" style="border: 1px solid #ccc; display: block;"></canvas>
+                <div class="sig-actions"><button type="button" id="clear-inspector">Clear</button></div>
             </div>
-            <div class="form-group">
+            <div class="form-group sig-field">
                 <label>Witness Name & Signature</label>
                 <input type="text" name="witnessedByName" value="${this.formData.witnessedByName || ''}" placeholder="Witness Name" required>
-                <canvas id="witness-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; margin-top:0.5rem;"></canvas>
-                <button type="button" id="clear-witness" style="margin-top: 0.5rem;">Clear</button>
+                <canvas id="witness-pad" width="400" height="200" style="border: 1px solid #ccc; display: block;"></canvas>
+                <div class="sig-actions"><button type="button" id="clear-witness">Clear</button></div>
             </div>
         `;
     }

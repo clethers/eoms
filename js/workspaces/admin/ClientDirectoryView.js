@@ -42,8 +42,10 @@ export default class ClientDirectoryView {
                                 <td>${escapeHTML(i.locationAddress || 'N/A')}</td>
                                 <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>
-                                    <button class="print-btn" data-id="${i.id}" title="Print Certificate" style="font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; background: var(--brand-green); color: white;">Print</button>
-                                    <button class="archive-btn" data-id="${i.id}" title="Archive Record" style="background-color: #ef4444; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Archive</button>
+                                    <div class="table-actions">
+                                    <button class="print-btn btn-sm" data-id="${i.id}" title="Print Certificate" style="background: var(--brand-green); color: white;">Print</button>
+                                    <button class="archive-btn btn-sm" data-id="${i.id}" title="Archive Record" style="background-color: #ef4444; color: white;">Archive</button>
+                                    </div>
                                 </td>
                             </tr>
                         `).join('')}
