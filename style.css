@@ -648,3 +648,8 @@ body.auth-locked #app-header {
   #reports-modal > div > div[style*="display: flex"] { flex-direction: column !important; }
 }
 /* ===== end responsive pass ===== */
+
+/* Workspace switcher removed from UI: collapse its container so no empty gap remains in the header */
+#workspace-switcher-container:empty {
+  display: none;
+}
