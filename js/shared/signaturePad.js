@@ -20,8 +20,8 @@ export function initSignaturePad(canvasId, clearBtnId) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
+        const x = (clientX - rect.left) * (rect.width ? canvas.width / rect.width : 1);
+        const y = (clientY - rect.top) * (rect.height ? canvas.height / rect.height : 1);
         
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
@@ -39,8 +39,8 @@ export function initSignaturePad(canvasId, clearBtnId) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-        lastX = clientX - rect.left;
-        lastY = clientY - rect.top;
+        lastX = (clientX - rect.left) * (rect.width ? canvas.width / rect.width : 1);
+        lastY = (clientY - rect.top) * (rect.height ? canvas.height / rect.height : 1);
         draw(e);
     }
     
