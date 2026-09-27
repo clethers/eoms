@@ -506,3 +506,145 @@ body.auth-locked #app-header {
     display: none;
   }
 }
+
+/* ===== Responsive pass (2026-09-27, go-live) — delete this block to revert ===== */
+/* Scoped to screen only so @media print rules above are untouched. Desktop (>1024px) unaffected. */
+
+/* ---- 1. Tablet + phone (<=1024px): shell layout ---- */
+@media screen and (max-width: 1024px) {
+  /* Use dynamic viewport height so mobile browser chrome doesn't cut off the bottom */
+  body { height: 100vh; height: 100dvh; }
+
+  /* Header: tighter spacing */
+  #app-header { padding: 0 0.75rem; gap: 0.5rem; }
+  .workspace-switcher { gap: 0.25rem; }
+  .workspace-switcher a {
+    display: inline-flex; align-items: center;
+    min-height: 44px; padding: 0.5rem 0.75rem; white-space: nowrap;
+  }
+  #notifications-container { margin-right: 0.75rem !important; min-width: 44px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center; }
+  .signout-btn { min-height: 44px; white-space: nowrap; }
+
+  /* Sidebar collapses to a horizontal scrollable tab strip above the content */
+  .workspace-layout { flex-direction: column; height: 100%; }
+  .workspace-layout > .sidebar {
+    width: 100%; flex-shrink: 0; padding: 0;
+    border-right: none; border-bottom: 1px solid var(--glass-border);
+  }
+  .workspace-layout .sidebar-nav {
+    flex-direction: row; overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; scrollbar-width: thin; white-space: nowrap;
+  }
+  .workspace-layout .sidebar-category { display: none; }
+  .workspace-layout .sidebar-nav a {
+    flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px;
+    padding: 0.6rem 1rem; border-left: none; border-bottom: 3px solid transparent;
+  }
+  .workspace-layout .sidebar-nav a.active { border-bottom-color: var(--brand-green); }
+  .workspace-layout > .main-view { padding: 1.25rem; min-height: 0; min-width: 0; }
+  .main-view { overflow-wrap: anywhere; }
+
+  /* ---- 2. Tables scroll horizontally inside their container ---- */
+  .main-view :not(.table-responsive) > table,
+  div[style*="position: fixed"] :not(.table-responsive) > table {
+    display: block; max-width: 100%; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; white-space: nowrap;
+  }
+  .main-view th { position: sticky; top: 0; z-index: 1; }
+
+  /* ---- 3. Touch targets + no iOS zoom ---- */
+  .main-view button, div[style*="position: fixed"] button,
+  .main-view a[class*="btn"], .main-view select, div[style*="position: fixed"] select,
+  .main-view input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+  div[style*="position: fixed"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]) {
+    min-height: 44px;
+  }
+  input, select, textarea { font-size: 16px !important; }
+  input[type="checkbox"], input[type="radio"] {
+    width: 22px !important; height: 22px; min-width: 22px; margin: 11px 0.5rem 11px 0; vertical-align: middle;
+    accent-color: var(--brand-green);
+  }
+  label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) {
+    display: inline-flex; align-items: center; min-height: 44px;
+  }
+
+  /* ---- 4. Forms: max two columns on tablets ---- */
+  .main-view [style*="grid-template-columns: repeat(3"],
+  .main-view [style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .main-view [style*="grid-template-columns"] > * { min-width: 0; }
+  /* Calendar: keep 7 columns but let them shrink */
+  .main-view [style*="grid-template-columns: repeat(7"] {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+  .main-view img, .main-view video, .main-view canvas,
+  div[style*="position: fixed"] img, div[style*="position: fixed"] canvas { max-width: 100%; }
+  .main-view canvas[id$="-pad"] { height: auto; touch-action: none; }
+  #map, .leaflet-container { max-width: 100%; }
+  #photo-preview { flex-wrap: wrap !important; }
+  #photo-preview > * { max-width: 100%; }
+  .main-view input[style*="width: 200px"] { max-width: 100%; }
+
+  /* ---- 5. Modals: cap to viewport with internal scroll ---- */
+  div[style*="position: fixed"] > div {
+    max-width: 90vw !important; max-height: 90vh !important; overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ---- Phones (<=640px) ---- */
+@media screen and (max-width: 640px) {
+  /* Header wraps: logo + bell + sign out on row 1, workspace tabs scroll on row 2 */
+  #app-header { height: auto; flex-wrap: wrap; padding: 0.25rem 0.5rem; row-gap: 0; }
+  .logo { font-size: 1.05rem; }
+  .header-center {
+    order: 3; flex: 1 1 100%; justify-content: flex-start;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .workspace-switcher { flex-wrap: nowrap; }
+  .header-right { margin-left: auto; }
+  #notifications-container { margin-right: 0.25rem !important; position: static !important; }
+  /* Notification dropdown anchors to the header and spans the screen */
+  #notif-dropdown {
+    position: absolute !important; top: 100% !important;
+    left: 0.5rem !important; right: 0.5rem !important;
+    width: auto !important; max-width: none !important; max-height: 70vh !important;
+  }
+  .signout-btn { padding: 0.4rem 0.7rem; }
+
+  /* Tighter spacing and type */
+  .workspace-layout > .main-view { padding: 0.75rem; }
+  .card { padding: 1rem; border-radius: 0.5rem; }
+  .main-view h1 { font-size: 1.4rem; }
+  .main-view h2 { font-size: 1.2rem; }
+  .main-view h3 { font-size: 1.05rem; }
+  th, td { padding: 0.6rem 0.75rem; }
+
+  /* Forms: single column */
+  .main-view [style*="grid-template-columns"]:not([style*="repeat(7"]),
+  div[style*="position: fixed"] [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .main-view [style*="grid-column"] { grid-column: auto !important; }
+  .main-view [style*="min-width: 300px"], .main-view [style*="min-width: 150px"] { min-width: 0 !important; }
+  .main-view div[style*="display: flex"]:not([style*="flex-direction: column"]),
+  div[style*="position: fixed"] div[style*="display: flex"]:not([style*="flex-direction: column"]) {
+    flex-wrap: wrap;
+  }
+  .main-view div[style*="gap: 2rem"] { gap: 1rem !important; }
+  #map { min-height: 300px !important; }
+  /* Calendar cells: smaller text */
+  .main-view [style*="grid-template-columns: repeat(7"] { font-size: 0.7rem; }
+
+  /* Modals: near full screen */
+  div[style*="position: fixed"] > div {
+    width: calc(100vw - 16px) !important; max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important; margin: 8px auto !important;
+    padding: 1rem !important;
+  }
+  div[style*="position: fixed"] > .print-modal-content { padding-top: 3.75rem !important; }
+  #reports-modal > div > div[style*="display: flex"] { flex-direction: column !important; }
+}
+/* ===== end responsive pass ===== */
