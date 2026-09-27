@@ -4,6 +4,9 @@ import { initSignaturePad } from '../../shared/signaturePad.js';
 import { getItemsByCategory } from '../../services/masterDataService.js';
 import { navigateTo } from '../../components/Router.js';
 import { localDateTimeInputValue } from '../../shared/dateFormat.js';
+import { compressImages, toPhotoList } from '../../shared/imageCompress.js';
+
+const MAX_PHOTOS_PER_SLOT = 10;
 
 export default class OcularFormView {
     constructor() {
@@ -28,6 +31,7 @@ export default class OcularFormView {
             const draft = await getOcularDraft(parseInt(draftId));
             if (draft) this.formData = draft;
         }
+        this.normalizePhotoAttachments();
 
         this.renderStep();
         return this.container;
@@ -104,6 +108,7 @@ export default class OcularFormView {
 
         const saveBtn = this.container.querySelector('#save-draft-btn');
         if (saveBtn) saveBtn.addEventListener('click', async () => {
+            if (this.processingPhotos) return;
             try {
                 this.saveData();
                 await this.saveAsDraft();
@@ -127,9 +132,13 @@ export default class OcularFormView {
                 wiring_conduit: 'Wiring/Conduit Layout photo',
                 ev_charging_location: 'EV Charging Location photo'
             };
+            if (this.processingPhotos) {
+                alert('Photos are still processing. Please wait a moment.');
+                return;
+            }
             const photos = this.formData.photoAttachments || {};
             for (const [key, label] of Object.entries(requiredPhotos)) {
-                if (!photos[key]) missing.push(label);
+                if (toPhotoList(photos[key]).length < 1) missing.push(`${label} (at least 1)`);
             }
             if (!this.inspectorPad || this.inspectorPad.isEmpty()) missing.push('Inspector signature');
             if (!this.witnessPad || this.witnessPad.isEmpty()) missing.push('Witness signature');
@@ -523,9 +532,9 @@ export default class OcularFormView {
         
         return `
             <h3>Site Photo Attachments</h3>
-            <p>Please upload exactly 4 required photos. All photos are required.</p>
+            <p>Each of the 4 slots needs at least 1 photo (up to ${MAX_PHOTOS_PER_SLOT} per slot). You can select several photos at once.</p>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; margin-bottom: 2rem;">
+            <div class="photo-slot-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; margin-bottom: 2rem;">
                 ${this.renderPhotoSlot('proposed_layout', 'Proposed Layout')}
                 ${this.renderPhotoSlot('tapping_point', 'Tapping Point')}
                 ${this.renderPhotoSlot('wiring_conduit', 'Wiring/Conduit Layout')}
@@ -563,78 +572,129 @@ export default class OcularFormView {
         `;
     }
 
+    normalizePhotoAttachments() {
+        const pa = this.formData.photoAttachments;
+        if (!pa || typeof pa !== 'object' || Array.isArray(pa)) {
+            this.formData.photoAttachments = {};
+            return;
+        }
+        // Backward compatible: older records stored a single data URL string per slot.
+        for (const key of Object.keys(pa)) {
+            pa[key] = toPhotoList(pa[key]);
+        }
+    }
+
     renderPhotoSlot(key, label) {
-        const hasPhoto = !!this.formData.photoAttachments[key];
         return `
-            <div class="photo-slot" style="border: 1px dashed #ccc; padding: 1rem; text-align: center; background: #fafafa;">
-                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">${label}</label>
-                
-                <div id="preview-${key}" style="display: ${hasPhoto ? 'block' : 'none'}; margin-bottom: 0.5rem;">
-                    <img src="${hasPhoto ? this.formData.photoAttachments[key] : ''}" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc;" />
-                    <br/>
-                    <button type="button" class="remove-photo-btn" data-key="${key}" style="margin-top: 0.5rem; font-size: 0.8rem; background: #ef4444; color: white;">Remove</button>
+            <div class="photo-slot" data-slot="${key}" style="border: 1px dashed #ccc; padding: 1rem; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <label style="font-weight: bold;">${label}</label>
+                    <span class="photo-count" id="count-${key}">0 / ${MAX_PHOTOS_PER_SLOT}</span>
                 </div>
-                
-                <div id="upload-${key}" style="display: ${hasPhoto ? 'none' : 'block'};">
-                    <input type="file" class="photo-upload-input" data-key="${key}" accept="image/*" style="font-size: 0.8rem;">
+                <div class="photo-thumbs" id="thumbs-${key}"></div>
+                <div class="photo-processing" id="processing-${key}" style="display: none;">Processing photos…</div>
+                <div id="upload-${key}" style="margin-top: 0.5rem;">
+                    <input type="file" class="photo-upload-input" data-key="${key}" accept="image/*" multiple style="font-size: 0.8rem; max-width: 100%;">
                 </div>
             </div>
         `;
     }
 
-    initPhotos() {
-        const fileInputs = this.container.querySelectorAll('.photo-upload-input');
-        fileInputs.forEach(input => {
-            input.addEventListener('change', (e) => {
-                const key = e.target.dataset.key;
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const dataUrl = event.target.result;
-                        if (!this.formData.photoAttachments) this.formData.photoAttachments = {};
-                        this.formData.photoAttachments[key] = dataUrl;
-                        
-                        const previewDiv = this.container.querySelector('#preview-' + key);
-                        const uploadDiv = this.container.querySelector('#upload-' + key);
-                        previewDiv.querySelector('img').src = dataUrl;
-                        previewDiv.style.display = 'block';
-                        uploadDiv.style.display = 'none';
-                    };
-                    reader.readAsDataURL(file);
-                }
+    renderSlotThumbs(key) {
+        const list = toPhotoList(this.formData.photoAttachments[key]);
+        const thumbs = this.container.querySelector('#thumbs-' + key);
+        const count = this.container.querySelector('#count-' + key);
+        const upload = this.container.querySelector('#upload-' + key);
+        if (!thumbs) return;
+        thumbs.innerHTML = list.map((src, idx) => `
+            <div class="photo-thumb">
+                <img src="${src}" alt="Photo ${idx + 1}" loading="lazy" />
+                <button type="button" class="photo-thumb-remove" data-key="${key}" data-idx="${idx}" aria-label="Remove photo ${idx + 1}">✕</button>
+            </div>
+        `).join('');
+        if (count) count.textContent = `${list.length} / ${MAX_PHOTOS_PER_SLOT}`;
+        if (upload) upload.style.display = list.length >= MAX_PHOTOS_PER_SLOT ? 'none' : 'block';
+        thumbs.querySelectorAll('.photo-thumb-remove').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (this.processingPhotos) return;
+                const arr = toPhotoList(this.formData.photoAttachments[key]);
+                arr.splice(parseInt(btn.dataset.idx, 10), 1);
+                this.formData.photoAttachments[key] = arr;
+                this.renderSlotThumbs(key);
             });
         });
+    }
 
-        const removeBtns = this.container.querySelectorAll('.remove-photo-btn');
-        removeBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
+    setPhotoProcessing(key, on) {
+        this.processingPhotos = on;
+        const el = this.container.querySelector('#processing-' + key);
+        if (el) el.style.display = on ? 'block' : 'none';
+        ['#save-draft-btn', '#submit-btn', '#prev-btn'].forEach(sel => {
+            const btn = this.container.querySelector(sel);
+            if (btn) btn.disabled = on;
+        });
+        this.container.querySelectorAll('.photo-upload-input').forEach(inp => { inp.disabled = on; });
+    }
+
+    async addPhotos(key, files) {
+        if (!files || !files.length || this.processingPhotos) return;
+        const current = toPhotoList(this.formData.photoAttachments[key]);
+        const room = MAX_PHOTOS_PER_SLOT - current.length;
+        const selected = Array.from(files);
+        const accepted = selected.slice(0, Math.max(0, room));
+        const skipped = selected.length - accepted.length;
+
+        this.setPhotoProcessing(key, true);
+        let result;
+        try {
+            result = await compressImages(accepted);
+        } finally {
+            this.setPhotoProcessing(key, false);
+        }
+        this.formData.photoAttachments[key] = current.concat(result.dataUrls);
+        this.renderSlotThumbs(key);
+
+        const msgs = [];
+        if (skipped > 0) msgs.push(`Maximum ${MAX_PHOTOS_PER_SLOT} photos per slot. ${skipped} photo${skipped === 1 ? ' was' : 's were'} skipped.`);
+        if (result.errors.length) msgs.push(...result.errors);
+        if (msgs.length) alert(msgs.join(`
+`));
+    }
+
+    initPhotos() {
+        this.normalizePhotoAttachments();
+        const fileInputs = this.container.querySelectorAll('.photo-upload-input');
+        fileInputs.forEach(input => {
+            this.renderSlotThumbs(input.dataset.key);
+            input.addEventListener('change', async (e) => {
                 const key = e.target.dataset.key;
-                if (this.formData.photoAttachments) {
-                    delete this.formData.photoAttachments[key];
-                }
-                const previewDiv = this.container.querySelector('#preview-' + key);
-                const uploadDiv = this.container.querySelector('#upload-' + key);
-                previewDiv.querySelector('img').src = '';
-                previewDiv.style.display = 'none';
-                uploadDiv.style.display = 'block';
-                const fileInput = uploadDiv.querySelector('.photo-upload-input');
-                if (fileInput) fileInput.value = '';
+                const files = Array.from(e.target.files || []);
+                e.target.value = '';
+                await this.addPhotos(key, files);
             });
         });
 
         const downloadBtn = this.container.querySelector('#download-photos-btn');
         if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                if (!this.formData.photoAttachments || Object.keys(this.formData.photoAttachments).length === 0) {
+            downloadBtn.addEventListener('click', async () => {
+                const pa = this.formData.photoAttachments || {};
+                const entries = [];
+                for (const [key, value] of Object.entries(pa)) {
+                    toPhotoList(value).forEach((dataUrl, i) => entries.push({ name: `${key}-${i + 1}.jpg`, dataUrl }));
+                }
+                if (entries.length === 0) {
                     alert('No photos to download.');
                     return;
                 }
-                for (const [key, dataUrl] of Object.entries(this.formData.photoAttachments)) {
+                for (const { name, dataUrl } of entries) {
                     const a = document.createElement('a');
                     a.href = dataUrl;
-                    a.download = `photo_${key}.png`;
+                    a.download = name;
+                    document.body.appendChild(a);
                     a.click();
+                    a.remove();
+                    // Small gap so browsers don't drop rapid successive downloads.
+                    await new Promise(r => setTimeout(r, 150));
                 }
             });
         }

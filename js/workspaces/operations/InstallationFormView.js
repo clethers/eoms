@@ -6,6 +6,9 @@ import { localDateTimeInputValue } from '../../shared/dateFormat.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML, isValidBase64Image } from '../../shared/security.js';
 import { navigateTo } from '../../components/Router.js';
+import { compressImages, toPhotoList } from '../../shared/imageCompress.js';
+
+const MAX_INSTALLATION_PHOTOS = 30;
 
 export default class InstallationFormView {
     constructor() {
@@ -131,19 +134,10 @@ export default class InstallationFormView {
             const previewContainer = this.container.querySelector('#photo-preview');
             
             if (photoInput) {
-                photoInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            const dataUrl = event.target.result;
-                            if (isValidBase64Image(dataUrl)) {
-                                this.photos.push(dataUrl);
-                                this.renderPhotos(previewContainer);
-                            }
-                        };
-                        reader.readAsDataURL(file);
-                    }
+                photoInput.addEventListener('change', async (e) => {
+                    const files = Array.from(e.target.files || []);
+                    e.target.value = '';
+                    await this.addPhotos(files, previewContainer);
                 });
                 // initial render
                 this.renderPhotos(previewContainer);
@@ -156,6 +150,10 @@ export default class InstallationFormView {
                 e.preventDefault();
                 this.saveData();
 
+                if (this.processingPhotos) {
+                    alert('Photos are still processing. Please wait a moment.');
+                    return;
+                }
                 const missing = [];
                 if (!this.installerPad || this.installerPad.isEmpty()) missing.push('Installer signature');
                 if (!this.clientRepPad || this.clientRepPad.isEmpty()) missing.push('Client rep signature');
@@ -194,18 +192,58 @@ export default class InstallationFormView {
         }
     }
 
+    async addPhotos(files, container) {
+        if (!files.length || this.processingPhotos) return;
+        this.photos = toPhotoList(this.photos);
+        const room = MAX_INSTALLATION_PHOTOS - this.photos.length;
+        const accepted = files.slice(0, Math.max(0, room));
+        const skipped = files.length - accepted.length;
+
+        this.setPhotoProcessing(true);
+        let result;
+        try {
+            result = await compressImages(accepted);
+        } finally {
+            this.setPhotoProcessing(false);
+        }
+        this.photos.push(...result.dataUrls.filter(isValidBase64Image));
+        this.renderPhotos(container);
+
+        const msgs = [];
+        if (skipped > 0) msgs.push(`Maximum ${MAX_INSTALLATION_PHOTOS} photos. ${skipped} photo${skipped === 1 ? ' was' : 's were'} skipped.`);
+        if (result.errors.length) msgs.push(...result.errors);
+        if (msgs.length) alert(msgs.join(`
+`));
+    }
+
+    setPhotoProcessing(on) {
+        this.processingPhotos = on;
+        const el = this.container.querySelector('#photo-processing');
+        if (el) el.style.display = on ? 'block' : 'none';
+        ['#prev-btn', '#next-btn', '#cancel-btn', '#submit-btn', '#photo-upload'].forEach(sel => {
+            const node = this.container.querySelector(sel);
+            if (node) node.disabled = on;
+        });
+    }
+
     renderPhotos(container) {
+        if (!container) return;
+        this.photos = toPhotoList(this.photos);
         container.innerHTML = this.photos.map((p, idx) => `
-            <div style="display:inline-block; margin: 0.5rem; text-align:center;">
-                <img src="${p}" loading="lazy" style="max-width: 150px; border: 1px solid #ccc; display: block;" />
-                <button type="button" class="remove-photo-btn" data-idx="${idx}" style="margin-top: 0.2rem; font-size: 0.8rem; background: #ef4444; color: white;">Remove</button>
+            <div class="photo-thumb">
+                <img src="${p}" alt="Photo ${idx + 1}" loading="lazy" />
+                <button type="button" class="photo-thumb-remove" data-idx="${idx}" aria-label="Remove photo ${idx + 1}">✕</button>
             </div>
         `).join('');
-        
-        container.querySelectorAll('.remove-photo-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const idx = parseInt(e.target.dataset.idx, 10);
-                this.photos.splice(idx, 1);
+        const count = this.container.querySelector('#photo-count');
+        if (count) count.textContent = `${this.photos.length} / ${MAX_INSTALLATION_PHOTOS}`;
+        const upload = this.container.querySelector('#photo-upload');
+        if (upload) upload.style.display = this.photos.length >= MAX_INSTALLATION_PHOTOS ? 'none' : '';
+
+        container.querySelectorAll('.photo-thumb-remove').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (this.processingPhotos) return;
+                this.photos.splice(parseInt(btn.dataset.idx, 10), 1);
                 this.renderPhotos(container);
             });
         });
@@ -360,11 +398,15 @@ export default class InstallationFormView {
     renderStep3() {
         return `
             <h3>Photo Attachments</h3>
-            <p>Upload photos of the completed installation.</p>
+            <p>Upload photos of the completed installation (at least 1, up to ${MAX_INSTALLATION_PHOTOS}). You can select several photos at once.</p>
             <div class="form-group">
-                <input type="file" id="photo-upload" accept="image/*">
+                <input type="file" id="photo-upload" accept="image/*" multiple>
             </div>
-            <div id="photo-preview" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; min-height: 150px; border: 1px dashed #ccc; padding: 1rem;"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="photo-processing" id="photo-processing" style="display: none; margin-top: 0;">Processing photos…</span>
+                <span class="photo-count" id="photo-count" style="margin-left: auto;">${this.photos.length} / ${MAX_INSTALLATION_PHOTOS}</span>
+            </div>
+            <div id="photo-preview" class="photo-thumbs" style="margin-top: 0.5rem; min-height: 110px; border: 1px dashed #ccc; padding: 1rem;"></div>
         `;
     }
 

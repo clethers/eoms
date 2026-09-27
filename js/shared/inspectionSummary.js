@@ -1,5 +1,33 @@
 import { formatDateTime } from './dateFormat.js';
-import { escapeHTML } from './security.js';
+import { escapeHTML, isValidBase64Image } from './security.js';
+import { toPhotoList } from './imageCompress.js';
+
+const OCULAR_PHOTO_SLOTS = [
+    ['proposed_layout', 'Proposed Layout'],
+    ['tapping_point', 'Tapping Point'],
+    ['wiring_conduit', 'Wiring/Conduit Layout'],
+    ['ev_charging_location', 'EV Charging Location']
+];
+
+// Each slot may hold a single data-URL string (legacy) or an array of them.
+function renderPhotoSection(item) {
+    const pa = item.photoAttachments;
+    if (!pa || typeof pa !== 'object' || Array.isArray(pa)) return '';
+    const known = new Set(OCULAR_PHOTO_SLOTS.map(([k]) => k));
+    const slots = OCULAR_PHOTO_SLOTS.concat(Object.keys(pa).filter(k => !known.has(k)).map(k => [k, k]));
+    const blocks = slots.map(([key, label]) => {
+        const list = toPhotoList(pa[key]).filter(isValidBase64Image);
+        if (!list.length) return '';
+        return `
+            <div style="margin-bottom: 0.75rem;">
+                <p style="margin-bottom: 0.25rem;"><strong>${escapeHTML(label)}</strong> (${list.length})</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    ${list.map((src, i) => `<img src="${src}" loading="lazy" alt="${escapeHTML(label)} ${i + 1}" style="height: 100px; max-width: 100%; border-radius: 4px; border: 1px solid #ccc;"/>`).join('')}
+                </div>
+            </div>`;
+    }).join('');
+    return blocks.trim() ? `<hr style="margin: 1rem 0;" /><h4>Site Photos</h4>${blocks}` : '';
+}
 
 export function buildInspectionSummaryHtml(item) {
     if (!item) return '<p>No data available</p>';
@@ -23,6 +51,7 @@ export function buildInspectionSummaryHtml(item) {
                     ${item.witnessSigImg ? `<img src="${item.witnessSigImg}" style="max-width: 150px; border: 1px solid #ccc;"/>` : ''}
                 </div>
             </div>
+            ${renderPhotoSection(item)}
         </div>
     `;
 }

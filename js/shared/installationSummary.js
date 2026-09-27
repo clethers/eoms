@@ -1,8 +1,19 @@
 import { formatDateTime } from './dateFormat.js';
-import { escapeHTML } from './security.js';
+import { escapeHTML, isValidBase64Image } from './security.js';
+
+// Photos may be stored as data-URL strings or as { dataUrl, tags } objects,
+// under photoAttachments (current) or photos (legacy).
+function collectPhotos(item) {
+    const raw = Array.isArray(item.photoAttachments) ? item.photoAttachments
+        : Array.isArray(item.photos) ? item.photos : [];
+    return raw
+        .map(p => (typeof p === 'string' ? { dataUrl: p, tags: '' } : (p && typeof p.dataUrl === 'string' ? { dataUrl: p.dataUrl, tags: p.tags || '' } : null)))
+        .filter(p => p && isValidBase64Image(p.dataUrl));
+}
 
 export function buildInstallationSummaryHtml(item) {
     if (!item) return '<p>No installation data available</p>';
+    const photos = collectPhotos(item);
     
     return `
         <div class="inspection-summary">
@@ -23,11 +34,11 @@ export function buildInstallationSummaryHtml(item) {
                     ${item.clientSigImg ? `<img src="${item.clientSigImg}" style="max-width: 150px; border: 1px solid #ccc;"/>` : 'No signature'}
                 </div>
             </div>
-            ${item.photos && item.photos.length > 0 ? `
+            ${photos.length > 0 ? `
                 <hr style="margin: 1rem 0;" />
-                <h4>Photos</h4>
-                <div style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem;">
-                    ${item.photos.map(p => `<img src="${p.dataUrl}" style="height: 100px; border-radius: 4px; border: 1px solid #ccc;" title="${escapeHTML(p.tags)}"/>`).join('')}
+                <h4>Photos (${photos.length})</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding-bottom: 1rem;">
+                    ${photos.map(p => `<img src="${p.dataUrl}" loading="lazy" style="height: 100px; max-width: 100%; border-radius: 4px; border: 1px solid #ccc;" title="${escapeHTML(p.tags)}"/>`).join('')}
                 </div>
             ` : ''}
         </div>
