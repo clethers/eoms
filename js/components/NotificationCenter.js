@@ -1,6 +1,33 @@
 import { getAll, put, COLLECTIONS, dbEvents } from '../services/localDb.js';
 import { getActiveProfileId, profileEvents } from './ActiveProfilePicker.js';
 import { escapeHTML } from '../shared/security.js';
+import { supabase } from '../services/supabaseClient.js';
+
+// Module-level state so repeated calls never stack listeners/channels
+let notifChannel = null;
+let notifChannelProfileId = null;
+let docClickBound = false;
+let wiredContainerId = null;
+let currentRender = null;
+
+function subscribeNotifications(profileId, onChange) {
+    if (notifChannelProfileId === profileId && notifChannel) return;
+    if (notifChannel) {
+        try { supabase.removeChannel(notifChannel); } catch (e) { console.error(e); }
+        notifChannel = null;
+        notifChannelProfileId = null;
+    }
+    if (!profileId) return;
+    try {
+        notifChannel = supabase
+            .channel(`notifications-user-${profileId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${profileId}` }, () => onChange())
+            .subscribe();
+        notifChannelProfileId = profileId;
+    } catch (e) {
+        console.error('Failed to subscribe to notifications realtime:', e);
+    }
+}
 
 export async function renderNotificationCenter(containerId) {
     const container = document.getElementById(containerId);
@@ -8,6 +35,7 @@ export async function renderNotificationCenter(containerId) {
 
     const render = async () => {
         const userId = getActiveProfileId();
+        subscribeNotifications(userId, () => { if (currentRender) currentRender(); });
         if (!userId) {
             container.innerHTML = '';
             return;
@@ -46,9 +74,13 @@ export async function renderNotificationCenter(containerId) {
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
         });
 
-        document.addEventListener('click', () => {
-            dropdown.style.display = 'none';
-        });
+        if (!docClickBound) {
+            docClickBound = true;
+            document.addEventListener('click', () => {
+                const dd = document.getElementById('notif-dropdown');
+                if (dd) dd.style.display = 'none';
+            });
+        }
 
         dropdown.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -74,10 +106,16 @@ export async function renderNotificationCenter(containerId) {
         });
     };
 
-    // Initial render
-    await render();
+    currentRender = render;
 
-    // Re-render on profile change or db update
-    profileEvents.addEventListener('profileChanged', render);
-    dbEvents.addEventListener('notifications_changed', render);
+    // Initial render
+    try { await render(); } catch (e) { console.error('Notification render failed:', e); }
+
+    // Re-render on profile change or db update (bind once per container)
+    if (wiredContainerId !== containerId) {
+        wiredContainerId = containerId;
+        const safeRender = () => { if (currentRender) currentRender().catch(e => console.error('Notification render failed:', e)); };
+        profileEvents.addEventListener('profileChanged', safeRender);
+        dbEvents.addEventListener('notifications_changed', safeRender);
+    }
 }

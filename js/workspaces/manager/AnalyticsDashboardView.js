@@ -36,7 +36,7 @@ export default class AnalyticsDashboardView {
 
             // Calculate KPIs
             const totalLeads = leads.length;
-            const completedInstalls = installs.filter(i => i.status === 'COMPLETED').length;
+            const completedInstalls = installs.filter(i => i.status === 'COMMISSIONED').length;
             
             // Win/Loss calculation
             const wonLeads = leads.filter(l => l.stage === 'QUOTE_ACCEPTED' || l.stage.includes('INSTALLATION') || l.stage === 'JOB_CHECKOUT_COMPLETE').length;

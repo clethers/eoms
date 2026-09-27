@@ -1,7 +1,8 @@
-import { openDB } from 'idb';
-
-const DB_NAME = 'oims_db';
-const DB_VERSION = 3;
+// Data layer bridge: same exported API as the old IndexedDB version, but
+// every call goes to Supabase (online-only, no local cache/fallback).
+// Schema: supabase/bridge.sql. Each collection is a table whose `data` jsonb
+// column holds the full record, plus a few "promoted" columns for filtering.
+import { supabase } from './supabaseClient.js';
 
 export const COLLECTIONS = {
   PROFILES: 'profiles',
@@ -18,303 +19,324 @@ export const COLLECTIONS = {
 // EventTarget to emit change events
 export const dbEvents = new EventTarget();
 
-let dbPromise;
+const PAGE_SIZE = 1000;
+
+// Column types for promoted columns
+const BIGINT = 'bigint';
+const TEXT = 'text';
+const BOOL = 'bool';
+const TS = 'timestamp';
+const UUID = 'uuid';
+
+// collection -> { table, key (primary key column), recordKey (field on record), columns: { camelField: [column, type] } }
+const SCHEMA = {
+  [COLLECTIONS.PROFILES]: {
+    table: 'profiles', key: 'id', recordKey: 'id',
+    columns: {
+      authUserId: ['auth_user_id', UUID],
+      email: ['email', TEXT],
+      fullName: ['full_name', TEXT],
+      role: ['role', TEXT],
+      status: ['status', TEXT]
+    }
+  },
+  [COLLECTIONS.OCULAR_INSPECTIONS]: {
+    table: 'ocular_inspections', key: 'id', recordKey: 'id',
+    columns: {
+      rnNo: ['rn_no', TEXT],
+      status: ['status', TEXT],
+      assignedTeam: ['assigned_team', BIGINT],
+      createdBy: ['created_by', BIGINT],
+      deletedAt: ['deleted_at', TS]
+    }
+  },
+  [COLLECTIONS.INSTALLATION_RECORDS]: {
+    table: 'installation_records', key: 'id', recordKey: 'id',
+    columns: {
+      ocularId: ['ocular_id', BIGINT],
+      status: ['status', TEXT],
+      assignedTeam: ['assigned_team', BIGINT],
+      installationNo: ['installation_no', TEXT],
+      deletedAt: ['deleted_at', TS]
+    }
+  },
+  [COLLECTIONS.MASTER_DATA_CATALOG]: {
+    table: 'master_data_catalog', key: 'item_key', recordKey: 'itemKey',
+    columns: {
+      category: ['category', TEXT]
+    }
+  },
+  [COLLECTIONS.PHOTO_ATTACHMENTS]: {
+    table: 'photo_attachments', key: 'id', recordKey: 'id',
+    columns: {}
+  },
+  [COLLECTIONS.AUDIT_LOGS]: {
+    table: 'audit_logs', key: 'id', recordKey: 'id',
+    columns: {
+      category: ['category', TEXT],
+      severity: ['severity', TEXT],
+      actorId: ['actor_id', BIGINT]
+    }
+  },
+  [COLLECTIONS.SUPPORT_TICKETS]: {
+    table: 'support_tickets', key: 'id', recordKey: 'id',
+    columns: {
+      status: ['status', TEXT],
+      createdBy: ['created_by', BIGINT]
+    }
+  },
+  [COLLECTIONS.SALES_LEADS]: {
+    table: 'sales_leads', key: 'id', recordKey: 'id',
+    columns: {
+      stage: ['stage', TEXT],
+      legacyRowId: ['legacy_row_id', TEXT],
+      ocularId: ['ocular_id', BIGINT],
+      deletedAt: ['deleted_at', TS]
+    }
+  },
+  [COLLECTIONS.NOTIFICATIONS]: {
+    table: 'notifications', key: 'id', recordKey: 'id',
+    columns: {
+      userId: ['user_id', BIGINT],
+      isRead: ['is_read', BOOL]
+    }
+  }
+};
+
+// Friendly messages for unique constraints (Postgres default constraint names)
+const UNIQUE_MESSAGES = {
+  ocular_inspections_rn_no_key: 'RN number already exists',
+  profiles_email_key: 'A profile with this email already exists',
+  profiles_auth_user_id_key: 'This login is already linked to another profile',
+  sales_leads_legacy_row_id_key: 'A sales lead with this legacy row ID already exists',
+  sales_leads_ocular_id_key: 'A sales lead is already linked to this ocular inspection',
+  master_data_catalog_pkey: 'A catalog item with this key already exists'
+};
+
+function schemaFor(collection) {
+  const s = SCHEMA[collection];
+  if (!s) throw new Error(`Unknown collection: ${collection}`);
+  return s;
+}
+
+function toError(error, collection, action) {
+  const raw = error?.message || String(error);
+  let msg;
+  if (error?.code === '23505') {
+    const hit = Object.keys(UNIQUE_MESSAGES).find(k => raw.includes(k));
+    msg = hit ? UNIQUE_MESSAGES[hit] : `Duplicate value: ${error.details || raw}`;
+  } else if (error?.code === '42501' || /row-level security/i.test(raw)) {
+    msg = `Permission denied (${action} ${collection}). Are you signed in with the right role?`;
+  } else if (error?.code === '23514') {
+    msg = `Invalid value rejected by the database: ${raw}`;
+  } else if (/Failed to fetch|NetworkError|network/i.test(raw)) {
+    msg = 'Cannot reach the server. Check your internet connection and try again.';
+  } else {
+    msg = `Database error (${action} ${collection}): ${raw}`;
+  }
+  const err = new Error(msg);
+  err.cause = error;
+  err.code = error?.code;
+  return err;
+}
+
+function coerce(value, type) {
+  if (value === undefined || value === null || value === '') return null;
+  switch (type) {
+    case BIGINT: {
+      const n = typeof value === 'number' ? value : Number(String(value).trim());
+      return Number.isFinite(n) && Number.isInteger(n) ? n : null;
+    }
+    case BOOL:
+      if (typeof value === 'string') return value === 'true' || value === '1';
+      return Boolean(value);
+    case TEXT:
+      return String(value);
+    default:
+      return value;
+  }
+}
+
+function fromRow(collection, row) {
+  if (!row) return undefined;
+  const s = schemaFor(collection);
+  const record = { ...(row.data || {}) };
+  if (s.key === 'id') {
+    record.id = row.id;
+  } else {
+    record[s.recordKey] = row[s.key];
+  }
+  record.createdAt = row.created_at ?? record.createdAt;
+  record.updatedAt = row.updated_at ?? record.updatedAt;
+  if (collection === COLLECTIONS.PROFILES) {
+    if (row.email != null) record.email = row.email;
+    if (row.full_name != null) record.fullName = row.full_name;
+    if (row.role != null) record.role = row.role;
+    if (row.status != null) record.status = row.status;
+    record.authUserId = row.auth_user_id ?? null;
+  }
+  return record;
+}
+
+function toRow(collection, record) {
+  const s = schemaFor(collection);
+  const { id, ...rest } = record;
+  const data = s.key === 'id' ? rest : { ...record };
+  // authUserId lives only in its column; don't duplicate it inside data.
+  if (collection === COLLECTIONS.PROFILES) delete data.authUserId;
+  const row = { data };
+  for (const [field, [column, type]] of Object.entries(s.columns)) {
+    // Never clear the login link just because the caller's record lacks it.
+    if (column === 'auth_user_id' && record[field] === undefined) continue;
+    row[column] = coerce(record[field], type);
+  }
+  if (collection === COLLECTIONS.PROFILES && !row.status) row.status = 'ACTIVE';
+  if (collection === COLLECTIONS.NOTIFICATIONS && row.is_read === null) row.is_read = false;
+  return row;
+}
+
+function coerceKey(collection, key) {
+  const s = schemaFor(collection);
+  if (s.key === 'id') {
+    const n = coerce(key, BIGINT);
+    return n;
+  }
+  return key == null ? null : String(key);
+}
+
+function resolveIndexColumn(collection, indexName) {
+  const s = schemaFor(collection);
+  if (indexName === 'id' || indexName === s.recordKey) return [s.key, s.key === 'id' ? BIGINT : TEXT];
+  const col = s.columns[indexName];
+  if (!col) {
+    throw new Error(`No index "${indexName}" on ${collection}. Add it as a promoted column in localDb.js + bridge.sql.`);
+  }
+  return col;
+}
+
+async function fetchAllRows(query, collection, orderCol) {
+  const rows = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await query()
+      .order(orderCol, { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw toError(error, collection, 'read');
+    rows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+  }
+  return rows;
+}
 
 export function initDB() {
-  if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        // profiles
-        if (!db.objectStoreNames.contains(COLLECTIONS.PROFILES)) {
-          db.createObjectStore(COLLECTIONS.PROFILES, { keyPath: 'id', autoIncrement: true });
-        }
-        
-        // ocularInspections
-        if (!db.objectStoreNames.contains(COLLECTIONS.OCULAR_INSPECTIONS)) {
-          const store = db.createObjectStore(COLLECTIONS.OCULAR_INSPECTIONS, { keyPath: 'id', autoIncrement: true });
-          store.createIndex('rnNo', 'rnNo', { unique: true });
-          store.createIndex('status', 'status');
-          store.createIndex('createdBy', 'createdBy');
-        }
-
-        // installationRecords
-        if (!db.objectStoreNames.contains(COLLECTIONS.INSTALLATION_RECORDS)) {
-          const store = db.createObjectStore(COLLECTIONS.INSTALLATION_RECORDS, { keyPath: 'id', autoIncrement: true });
-          store.createIndex('ocularId', 'ocularId');
-          store.createIndex('status', 'status');
-        }
-
-        // masterDataCatalog
-        if (!db.objectStoreNames.contains(COLLECTIONS.MASTER_DATA_CATALOG)) {
-          db.createObjectStore(COLLECTIONS.MASTER_DATA_CATALOG, { keyPath: 'itemKey' });
-        }
-
-        // photoAttachments
-        if (!db.objectStoreNames.contains(COLLECTIONS.PHOTO_ATTACHMENTS)) {
-          db.createObjectStore(COLLECTIONS.PHOTO_ATTACHMENTS, { keyPath: 'id', autoIncrement: true });
-        }
-
-        // auditLogs
-        if (!db.objectStoreNames.contains(COLLECTIONS.AUDIT_LOGS)) {
-          db.createObjectStore(COLLECTIONS.AUDIT_LOGS, { keyPath: 'id', autoIncrement: true });
-        }
-
-        // supportTickets
-        if (!db.objectStoreNames.contains(COLLECTIONS.SUPPORT_TICKETS)) {
-          db.createObjectStore(COLLECTIONS.SUPPORT_TICKETS, { keyPath: 'id', autoIncrement: true });
-        }
-
-        // salesLeads
-        if (!db.objectStoreNames.contains(COLLECTIONS.SALES_LEADS)) {
-          const store = db.createObjectStore(COLLECTIONS.SALES_LEADS, { keyPath: 'id', autoIncrement: true });
-          store.createIndex('stage', 'stage');
-          store.createIndex('legacyRowId', 'legacyRowId', { unique: true });
-          store.createIndex('ocularId', 'ocularId', { unique: true });
-        }
-
-        // notifications
-        if (!db.objectStoreNames.contains(COLLECTIONS.NOTIFICATIONS)) {
-          const store = db.createObjectStore(COLLECTIONS.NOTIFICATIONS, { keyPath: 'id', autoIncrement: true });
-          store.createIndex('userId', 'userId');
-          store.createIndex('isRead', 'isRead');
-        }
-      },
-    }).then(async db => {
-        // Seed demo data if profiles is empty
-        const count = await db.count(COLLECTIONS.PROFILES);
-        if (count === 0) {
-            await seedDemoData(db);
-        }
-        return db;
-    });
-  }
-  return dbPromise;
+  // Nothing to open: Supabase is accessed per call. Kept for main.js compatibility.
+  return Promise.resolve();
 }
 
 export async function get(collection, id) {
-  const db = await initDB();
-  await new Promise(r => setTimeout(r, 400)); // Simulate network latency
-  return db.get(collection, id);
+  const s = schemaFor(collection);
+  const key = coerceKey(collection, id);
+  if (key === null) return undefined;
+  const { data, error } = await supabase.from(s.table).select('*').eq(s.key, key).maybeSingle();
+  if (error) throw toError(error, collection, 'read');
+  return data ? fromRow(collection, data) : undefined;
 }
 
 export async function getAll(collection, filterFn = null) {
-  const db = await initDB();
-  await new Promise(r => setTimeout(r, 400)); // Simulate network latency
-  const all = await db.getAll(collection);
-  if (filterFn) {
-    return all.filter(filterFn);
-  }
-  return all;
+  const s = schemaFor(collection);
+  const rows = await fetchAllRows(() => supabase.from(s.table).select('*'), collection, s.key);
+  const all = rows.map(r => fromRow(collection, r));
+  return filterFn ? all.filter(filterFn) : all;
 }
 
 // Support getting by index
 export async function getAllByIndex(collection, indexName, key) {
-  const db = await initDB();
-  return db.getAllFromIndex(collection, indexName, key);
+  const s = schemaFor(collection);
+  if (key === undefined) return getAll(collection);
+  const [column, type] = resolveIndexColumn(collection, indexName);
+  const value = coerce(key, type);
+  const rows = await fetchAllRows(
+    () => {
+      const q = supabase.from(s.table).select('*');
+      return value === null ? q.is(column, null) : q.eq(column, value);
+    },
+    collection,
+    s.key
+  );
+  return rows.map(r => fromRow(collection, r));
 }
 
 export async function getByIndex(collection, indexName, key) {
-  const db = await initDB();
-  return db.getFromIndex(collection, indexName, key);
+  const s = schemaFor(collection);
+  const [column, type] = resolveIndexColumn(collection, indexName);
+  const value = coerce(key, type);
+  if (value === null) return undefined;
+  const { data, error } = await supabase
+    .from(s.table)
+    .select('*')
+    .eq(column, value)
+    .order(s.key, { ascending: true })
+    .limit(1);
+  if (error) throw toError(error, collection, 'read');
+  return data && data.length ? fromRow(collection, data[0]) : undefined;
 }
 
 export async function put(collection, record) {
-  const db = await initDB();
+  const s = schemaFor(collection);
   const now = new Date().toISOString();
-  
+
   if (!record.createdAt) {
-      record.createdAt = now;
+    record.createdAt = now;
   }
   record.updatedAt = now;
 
-  const id = await db.put(collection, record);
-  
-  // Update record with autogenerated id if it's new (unless it's master data where itemKey is keyPath)
-  if (collection !== COLLECTIONS.MASTER_DATA_CATALOG) {
-      record.id = id;
+  const row = toRow(collection, record);
+  let saved;
+
+  if (s.key === 'id') {
+    const id = coerceKey(collection, record.id);
+    if (id !== null) {
+      const { data, error } = await supabase.from(s.table).update(row).eq('id', id).select();
+      if (error) throw toError(error, collection, 'update');
+      if (!data || data.length === 0) {
+        throw new Error(`Could not save ${collection} #${id}: record not found or you do not have permission to change it.`);
+      }
+      saved = data[0];
+    } else {
+      row.created_at = record.createdAt;
+      const { data, error } = await supabase.from(s.table).insert(row).select().single();
+      if (error) throw toError(error, collection, 'insert');
+      saved = data;
+    }
+    record.id = saved.id;
+  } else {
+    const key = coerceKey(collection, record[s.recordKey]);
+    if (!key) throw new Error(`Cannot save ${collection}: missing ${s.recordKey}.`);
+    row[s.key] = key;
+    const { data, error } = await supabase.from(s.table).upsert(row, { onConflict: s.key }).select().single();
+    if (error) throw toError(error, collection, 'save');
+    saved = data;
   }
-  
+
+  record.createdAt = saved.created_at ?? record.createdAt;
+  record.updatedAt = saved.updated_at ?? record.updatedAt;
+
   // Dispatch event for reactive updates
-  dbEvents.dispatchEvent(new CustomEvent('change', { 
-      detail: { collection, action: 'put', record } 
+  dbEvents.dispatchEvent(new CustomEvent('change', {
+    detail: { collection, action: 'put', record }
   }));
-  
+
   return record;
 }
 
 export async function remove(collection, id) {
-  const db = await initDB();
-  const record = await db.get(collection, id);
-  if (record) {
-    await db.delete(collection, id);
-    dbEvents.dispatchEvent(new CustomEvent('change', { 
-        detail: { collection, action: 'remove', id } 
+  const s = schemaFor(collection);
+  const key = coerceKey(collection, id);
+  if (key === null) return;
+  const { data, error } = await supabase.from(s.table).delete().eq(s.key, key).select(s.key);
+  if (error) throw toError(error, collection, 'delete');
+  if (data && data.length) {
+    dbEvents.dispatchEvent(new CustomEvent('change', {
+      detail: { collection, action: 'remove', id }
     }));
   }
 }
-
-// Seed Demo Data
-async function seedDemoData(db) {
-  const tx = db.transaction([COLLECTIONS.PROFILES, COLLECTIONS.MASTER_DATA_CATALOG], 'readwrite');
-  
-  // Seed profiles
-  const profiles = [
-    { email: 'inspector@demo.com', fullName: 'Alice Field', role: 'field_inspector', department: 'Operations', status: 'ACTIVE', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { email: 'manager@demo.com', fullName: 'Bob Manager', role: 'customer_care_manager', department: 'Operations', status: 'ACTIVE', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { email: 'engineer@demo.com', fullName: 'Charlie Engineer', role: 'lead_engineer', department: 'Engineering', status: 'ACTIVE', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { email: 'admin@demo.com', fullName: 'Dave Admin', role: 'admin', department: 'IT', status: 'ACTIVE', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-  ];
-
-  for (const p of profiles) {
-      tx.objectStore(COLLECTIONS.PROFILES).put(p);
-  }
-
-  // Seed master data catalog
-  const catalog = [
-    { category: 'breakers', itemKey: 'item-0', itemName: "ABB 40A S/N:BLY1200655-Breaker", details: {}, currentStock: 196, unitPrice: 1024 },
-    { category: 'breakers', itemKey: 'item-1', itemName: "ABB Bolt on Circuit Breaker TQC2440WL 40A 2P", details: {}, currentStock: 164, unitPrice: 1114 },
-    { category: 'hardware', itemKey: 'item-2', itemName: "ABB S202-C2 400V 6000 3 2B", details: {}, currentStock: 12, unitPrice: 1396 },
-    { category: 'enclosures', itemKey: 'item-3', itemName: "ANDELI ADB3LE-63 6000A 230V - 50/60HZ", details: {}, currentStock: 215, unitPrice: 529 },
-    { category: 'hardware', itemKey: 'item-4', itemName: "Atlanta PVC Solvent cement C#0032670", details: {}, currentStock: 67, unitPrice: 837 },
-    { category: 'hardware', itemKey: 'item-5', itemName: "Bass bar", details: {}, currentStock: 159, unitPrice: 1234 },
-    { category: 'hardware', itemKey: 'item-6', itemName: "BM 125SN 125AT, 3P, 30KAIC@ 230V", details: {}, currentStock: 184, unitPrice: 1196 },
-    { category: 'hardware', itemKey: 'item-7', itemName: "Bottom Knot  3/8", details: {}, currentStock: 60, unitPrice: 895 },
-    { category: 'breakers', itemKey: 'item-8', itemName: "Breaker MCBB", details: {}, currentStock: 159, unitPrice: 748 },
-    { category: 'breakers', itemKey: 'item-9', itemName: "BREAKER SLEMENS 2W/240 3VM 3VM1010- 3ED32-0AA0", details: {}, currentStock: 33, unitPrice: 1016 },
-    { category: 'hardware', itemKey: 'item-10', itemName: "BUTANE GAS Johnson Electic 250 UN 2037", details: {}, currentStock: 173, unitPrice: 1306 },
-    { category: 'wires', itemKey: 'item-11', itemName: "CABLE LUG  ELA LUG0503 SCHNEIDER ELECTRIC . 13 PER PACK", details: {}, currentStock: 9, unitPrice: 1129 },
-    { category: 'hardware', itemKey: 'item-12', itemName: "CAUTION TAPE", details: {}, currentStock: 90, unitPrice: 1315 },
-    { category: 'enclosures', itemKey: 'item-13', itemName: "CHNT  DB-2F808044 BC#624", details: {}, currentStock: 263, unitPrice: 1256 },
-    { category: 'breakers', itemKey: 'item-14', itemName: "Circuit Breaker Plug in 10LA 120/240 V 40A", details: {}, currentStock: 74, unitPrice: 1276 },
-    { category: 'fittings', itemKey: 'item-15', itemName: "CLAMP 1/2 2HOLE", details: {}, currentStock: 70, unitPrice: 1303 },
-    { category: 'fittings', itemKey: 'item-16', itemName: "CLAMP 3/4  1HOLE", details: {}, currentStock: 4, unitPrice: 1143 },
-    { category: 'fittings', itemKey: 'item-17', itemName: "CLAMP 3/4  2HOLE", details: {}, currentStock: 275, unitPrice: 126 },
-    { category: 'conduits', itemKey: 'item-18', itemName: "CONDUIT THREADED  TYPE 3/4\" T", details: {}, currentStock: 128, unitPrice: 761 },
-    { category: 'conduits', itemKey: 'item-19', itemName: "CONDUIT THREADED LR TYPE 3/4\" LR", details: {}, currentStock: 95, unitPrice: 1355 },
-    { category: 'hardware', itemKey: 'item-20', itemName: "Connection End B/(M41) 2.0 # 236120", details: {}, currentStock: 107, unitPrice: 1399 },
-    { category: 'conduits', itemKey: 'item-21', itemName: "Connector 1/2\" EMT SET SCREW", details: {}, currentStock: 217, unitPrice: 275 },
-    { category: 'hardware', itemKey: 'item-22', itemName: "COVER 4 x8x8", details: {}, currentStock: 50, unitPrice: 543 },
-    { category: 'hardware', itemKey: 'item-23', itemName: "CTE AS2500/5A 5VA-CL05 50/60 HZ", details: {}, currentStock: 215, unitPrice: 1480 },
-    { category: 'wires', itemKey: 'item-24', itemName: "CTE YL PE CABLE APUT-36C1X1-T", details: {}, currentStock: 130, unitPrice: 974 },
-    { category: 'hardware', itemKey: 'item-25', itemName: "D 14mm BLUE", details: {}, currentStock: 133, unitPrice: 1511 },
-    { category: 'hardware', itemKey: 'item-26', itemName: "D 14mm YELLOW", details: {}, currentStock: 95, unitPrice: 939 },
-    { category: 'hardware', itemKey: 'item-27', itemName: "D 14mm YELLOW", details: {}, currentStock: 116, unitPrice: 849 },
-    { category: 'hardware', itemKey: 'item-28', itemName: "D 14mmGREEN", details: {}, currentStock: 144, unitPrice: 1282 },
-    { category: 'hardware', itemKey: 'item-29', itemName: "D 30m BLUE", details: {}, currentStock: 90, unitPrice: 715 },
-    { category: 'hardware', itemKey: 'item-30', itemName: "D 30m RED", details: {}, currentStock: 82, unitPrice: 622 },
-    { category: 'enclosures', itemKey: 'item-31', itemName: "DISTRIBUTION BOX MCGILL 6WAYS", details: {}, currentStock: 289, unitPrice: 735 },
-    { category: 'wires', itemKey: 'item-32', itemName: "DURAFLEX 5.5 150/roll GREEN", details: {}, currentStock: 2, unitPrice: 1117 },
-    { category: 'wires', itemKey: 'item-33', itemName: "DURAFLEX 8.0 150 m/roll RED", details: {}, currentStock: 245, unitPrice: 1366 },
-    { category: 'wires', itemKey: 'item-34', itemName: "DURAFLEX 8.0 150 m/roll YELLOW", details: {}, currentStock: 13, unitPrice: 1304 },
-    { category: 'wires', itemKey: 'item-35', itemName: "DURAFLEX 8.00mm GREEN", details: {}, currentStock: 172, unitPrice: 932 },
-    { category: 'hardware', itemKey: 'item-36', itemName: "ELBOW 1 1/2\"", details: {}, currentStock: 96, unitPrice: 1221 },
-    { category: 'hardware', itemKey: 'item-37', itemName: "ELBOW 1\"", details: {}, currentStock: 90, unitPrice: 1428 },
-    { category: 'hardware', itemKey: 'item-38', itemName: "ELECTRIC METER  51952734", details: {}, currentStock: 157, unitPrice: 1359 },
-    { category: 'hardware', itemKey: 'item-39', itemName: "ELECTRIC METER SAFARI", details: {}, currentStock: 272, unitPrice: 932 },
-    { category: 'hardware', itemKey: 'item-40', itemName: "Electrical Tape", details: {}, currentStock: 31, unitPrice: 1399 },
-    { category: 'conduits', itemKey: 'item-41', itemName: "EMT PIPE 3/4 \" MCGILL", details: {}, currentStock: 87, unitPrice: 891 },
-    { category: 'conduits', itemKey: 'item-42', itemName: "EMT SET SCREW COUPLING  1/2\" MCGILL", details: {}, currentStock: 106, unitPrice: 410 },
-    { category: 'conduits', itemKey: 'item-43', itemName: "EMT SET SCREW COUPLING  3/4\" MCGILL", details: {}, currentStock: 234, unitPrice: 655 },
-    { category: 'conduits', itemKey: 'item-44', itemName: "EMTSET SCRE CONNECTOR 3/4\"  MCGILL", details: {}, currentStock: 10, unitPrice: 962 },
-    { category: 'hardware', itemKey: 'item-45', itemName: "Fiber Glass Mesh Tape", details: {}, currentStock: 189, unitPrice: 560 },
-    { category: 'hardware', itemKey: 'item-46', itemName: "FULL TRADE 3/8\"", details: {}, currentStock: 208, unitPrice: 1441 },
-    { category: 'breakers', itemKey: 'item-47', itemName: "GE Circuit Breaker Plug In 7QL244 Bolt on  40 A 2P", details: {}, currentStock: 9, unitPrice: 650 },
-    { category: 'breakers', itemKey: 'item-48', itemName: "GE Circuit Breaker TQC3440 WL 30A 3P", details: {}, currentStock: 280, unitPrice: 811 },
-    { category: 'hardware', itemKey: 'item-49', itemName: "GRINDING DESK (PANGHASA)", details: {}, currentStock: 111, unitPrice: 321 },
-    { category: 'hardware', itemKey: 'item-50', itemName: "GROUNDING ROD", details: {}, currentStock: 262, unitPrice: 584 },
-    { category: 'hardware', itemKey: 'item-51', itemName: "HIGH GRADE LENGTHTEN ALLOY HOLE SAW W3722-20 20MM", details: {}, currentStock: 49, unitPrice: 468 },
-    { category: 'conduits', itemKey: 'item-52', itemName: "IMC COUPLING 1/2\"", details: {}, currentStock: 123, unitPrice: 856 },
-    { category: 'conduits', itemKey: 'item-53', itemName: "IMC Coupling Connector MCGILL", details: {}, currentStock: 244, unitPrice: 1428 },
-    { category: 'conduits', itemKey: 'item-54', itemName: "IMC PIPE 1\"  MCGILL", details: {}, currentStock: 269, unitPrice: 763 },
-    { category: 'conduits', itemKey: 'item-55', itemName: "IMC PIPE 1/2\"  MCGILL", details: {}, currentStock: 228, unitPrice: 1095 },
-    { category: 'conduits', itemKey: 'item-56', itemName: "IMC PIPE 3/4\"  MCGILL", details: {}, currentStock: 179, unitPrice: 522 },
-    { category: 'enclosures', itemKey: 'item-57', itemName: "JUNCTION BOX", details: {}, currentStock: 179, unitPrice: 496 },
-    { category: 'enclosures', itemKey: 'item-58', itemName: "JUNCTION BOX  COVER", details: {}, currentStock: 181, unitPrice: 173 },
-    { category: 'enclosures', itemKey: 'item-59', itemName: "JUNON Distribution Box 6ways 230v/400v, 63a/p40  model #DX10-A06SWB", details: {}, currentStock: 100, unitPrice: 329 },
-    { category: 'hardware', itemKey: 'item-60', itemName: "KOTEN CB 40A", details: {}, currentStock: 60, unitPrice: 179 },
-    { category: 'hardware', itemKey: 'item-61', itemName: "KOTEN CB K63NC 32 220/380V10AA  / EC60898", details: {}, currentStock: 38, unitPrice: 597 },
-    { category: 'fittings', itemKey: 'item-62', itemName: "LIQUID TIGHT CONNECTOR  1 1/4\"", details: {}, currentStock: 205, unitPrice: 56 },
-    { category: 'conduits', itemKey: 'item-63', itemName: "LL 1/2  Thread Conduit Bodies Series w/cover MCGILL", details: {}, currentStock: 24, unitPrice: 685 },
-    { category: 'conduits', itemKey: 'item-64', itemName: "LQT 1/2\" HOSE", details: {}, currentStock: 11, unitPrice: 687 },
-    { category: 'conduits', itemKey: 'item-65', itemName: "LQT 3/4\" HOSE", details: {}, currentStock: 67, unitPrice: 662 },
-    { category: 'conduits', itemKey: 'item-66', itemName: "LQT Connector 1/2", details: {}, currentStock: 176, unitPrice: 569 },
-    { category: 'conduits', itemKey: 'item-67', itemName: "LQT Connector 3/4 MCGILL", details: {}, currentStock: 228, unitPrice: 1053 },
-    { category: 'conduits', itemKey: 'item-68', itemName: "LQT Connector 3/4\"", details: {}, currentStock: 73, unitPrice: 1436 },
-    { category: 'conduits', itemKey: 'item-69', itemName: "LQT STRAIGHT CONNECTOR 3/4\"", details: {}, currentStock: 195, unitPrice: 269 },
-    { category: 'breakers', itemKey: 'item-70', itemName: "MCB 20AT, 2P, 230V RPCH2P", details: {}, currentStock: 149, unitPrice: 615 },
-    { category: 'breakers', itemKey: 'item-71', itemName: "MCCB 80AT, 3P, 400V BM100HBN", details: {}, currentStock: 12, unitPrice: 894 },
-    { category: 'breakers', itemKey: 'item-72', itemName: "MCCB14 2PAC460V BF52a20A", details: {}, currentStock: 23, unitPrice: 1361 },
-    { category: 'enclosures', itemKey: 'item-73', itemName: "MCGILL 4WAYS DB 200X 130X 100mm", details: {}, currentStock: 75, unitPrice: 1393 },
-    { category: 'enclosures', itemKey: 'item-74', itemName: "MCGILL Waterproof  Distribution Box w/ DIN RAIL&screws 230-273-110m MGWDB-12", details: {}, currentStock: 73, unitPrice: 439 },
-    { category: 'breakers', itemKey: 'item-75', itemName: "MEGA HIMEL Breaker HDB9LEN63A26405 2P6RA 40A", details: {}, currentStock: 109, unitPrice: 265 },
-    { category: 'conduits', itemKey: 'item-76', itemName: "Metalic Conduit 3/4\"", details: {}, currentStock: 275, unitPrice: 1105 },
-    { category: 'breakers', itemKey: 'item-77', itemName: "METASOL MCCB ABN103C A3P", details: {}, currentStock: 110, unitPrice: 552 },
-    { category: 'hardware', itemKey: 'item-78', itemName: "MICA TUBE 1/2", details: {}, currentStock: 241, unitPrice: 945 },
-    { category: 'breakers', itemKey: 'item-79', itemName: "MINIATURE CIRCUIT BREAKER MCB BHA3LC20 IP20A 6KAAC240V SHIHLIN", details: {}, currentStock: 196, unitPrice: 423 },
-    { category: 'hardware', itemKey: 'item-80', itemName: "Pako 3\"", details: {}, currentStock: 52, unitPrice: 1043 },
-    { category: 'hardware', itemKey: 'item-81', itemName: "PANASONIC CB / EC60898-1 415V C40 BB122402CWTB", details: {}, currentStock: 205, unitPrice: 235 },
-    { category: 'wires', itemKey: 'item-82', itemName: "PD 1.25m WHITE", details: {}, currentStock: 118, unitPrice: 485 },
-    { category: 'wires', itemKey: 'item-83', itemName: "PD 100m YELLOW", details: {}, currentStock: 71, unitPrice: 681 },
-    { category: 'wires', itemKey: 'item-84', itemName: "PD 125m BLUE", details: {}, currentStock: 18, unitPrice: 100 },
-    { category: 'wires', itemKey: 'item-85', itemName: "PD 125m RED", details: {}, currentStock: 296, unitPrice: 214 },
-    { category: 'wires', itemKey: 'item-86', itemName: "PD 125mYELLOW", details: {}, currentStock: 228, unitPrice: 385 },
-    { category: 'wires', itemKey: 'item-87', itemName: "PD 22 BLUE", details: {}, currentStock: 203, unitPrice: 521 },
-    { category: 'wires', itemKey: 'item-88', itemName: "PD 22 RED", details: {}, currentStock: 208, unitPrice: 128 },
-    { category: 'wires', itemKey: 'item-89', itemName: "PD 22 YELLOW", details: {}, currentStock: 246, unitPrice: 1255 },
-    { category: 'wires', itemKey: 'item-90', itemName: "PD 3.5 BLUE", details: {}, currentStock: 288, unitPrice: 916 },
-    { category: 'wires', itemKey: 'item-91', itemName: "PD 3.5 YELLOW", details: {}, currentStock: 17, unitPrice: 1529 },
-    { category: 'wires', itemKey: 'item-92', itemName: "PD 30m  WHITE", details: {}, currentStock: 158, unitPrice: 776 },
-    { category: 'wires', itemKey: 'item-93', itemName: "PD 30m BLUE", details: {}, currentStock: 24, unitPrice: 1397 },
-    { category: 'wires', itemKey: 'item-94', itemName: "PD 30m RED", details: {}, currentStock: 262, unitPrice: 741 },
-    { category: 'wires', itemKey: 'item-95', itemName: "PD 30m YELLOW", details: {}, currentStock: 149, unitPrice: 165 },
-    { category: 'wires', itemKey: 'item-96', itemName: "PD 38mm WHITE", details: {}, currentStock: 212, unitPrice: 212 },
-    { category: 'wires', itemKey: 'item-97', itemName: "PD 5.5 BLUE", details: {}, currentStock: 268, unitPrice: 187 },
-    { category: 'wires', itemKey: 'item-98', itemName: "PD 5.5 RED", details: {}, currentStock: 176, unitPrice: 1307 },
-    { category: 'wires', itemKey: 'item-99', itemName: "PD 5.5 YELLOW", details: {}, currentStock: 21, unitPrice: 1278 },
-    { category: 'wires', itemKey: 'item-100', itemName: "PD 8.0 RED", details: {}, currentStock: 126, unitPrice: 631 },
-    { category: 'wires', itemKey: 'item-101', itemName: "PD 8.0 YELLOW", details: {}, currentStock: 242, unitPrice: 1503 },
-    { category: 'hardware', itemKey: 'item-102', itemName: "PF 38mm WHITE", details: {}, currentStock: 270, unitPrice: 768 },
-    { category: 'hardware', itemKey: 'item-103', itemName: "PLASTIC MOLDING  3/4 GRAY", details: {}, currentStock: 195, unitPrice: 1444 },
-    { category: 'hardware', itemKey: 'item-104', itemName: "PLASTIC MOLDING  3/4 WHITE", details: {}, currentStock: 65, unitPrice: 1323 },
-    { category: 'wires', itemKey: 'item-105', itemName: "POWER FLEX 8.0m RED", details: {}, currentStock: 231, unitPrice: 410 },
-    { category: 'wires', itemKey: 'item-106', itemName: "POWERFLEX  14mm BLUE", details: {}, currentStock: 26, unitPrice: 710 },
-    { category: 'wires', itemKey: 'item-107', itemName: "POWERFLEX  14mm RED", details: {}, currentStock: 12, unitPrice: 1271 },
-    { category: 'wires', itemKey: 'item-108', itemName: "POWERFLEX  5.5 WHITE", details: {}, currentStock: 289, unitPrice: 1274 },
-    { category: 'wires', itemKey: 'item-109', itemName: "POWERFLEX  5.5 YELLOW", details: {}, currentStock: 135, unitPrice: 139 },
-    { category: 'wires', itemKey: 'item-110', itemName: "POWERFLEX  8.0 GREEN", details: {}, currentStock: 292, unitPrice: 214 },
-    { category: 'wires', itemKey: 'item-111', itemName: "POWERFLEX 5.5 BLUE", details: {}, currentStock: 250, unitPrice: 1130 },
-    { category: 'wires', itemKey: 'item-112', itemName: "POWERFLEX 5.5m RED", details: {}, currentStock: 19, unitPrice: 185 },
-    { category: 'enclosures', itemKey: 'item-113', itemName: "Pullbox  6\"x8\"x8\" GA # 18", details: {}, currentStock: 226, unitPrice: 328 },
-    { category: 'conduits', itemKey: 'item-114', itemName: "PVC Pipe 1/2\" ATLANTA", details: {}, currentStock: 296, unitPrice: 753 },
-    { category: 'conduits', itemKey: 'item-115', itemName: "PVC Pipe 3/4\" ATLANTA", details: {}, currentStock: 10, unitPrice: 1239 },
-    { category: 'breakers', itemKey: 'item-116', itemName: "\"RCBO 2P 40at BHL B32 40AT 2P\"", details: {}, currentStock: 277, unitPrice: 1378 },
-    { category: 'breakers', itemKey: 'item-117', itemName: "RCBO SHIHLIN BHL 33 3P 400/415V C40", details: {}, currentStock: 299, unitPrice: 106 },
-    { category: 'breakers', itemKey: 'item-118', itemName: "RESIDUAL CURRENT CIRCUIT BREAKER WITH OVER CURRENT PROTECTION BHL33C 32AT, 3P, 400V", details: {}, currentStock: 143, unitPrice: 872 },
-    { category: 'hardware', itemKey: 'item-119', itemName: "SAMSUNG 60 inside 10W DL120", details: {}, currentStock: 271, unitPrice: 80 },
-    { category: 'hardware', itemKey: 'item-120', itemName: "Screw  124000014178", details: {}, currentStock: 103, unitPrice: 1028 },
-    { category: 'enclosures', itemKey: 'item-121', itemName: "SELHOT SHOW-6 WATERPROOF DB 1P66", details: {}, currentStock: 235, unitPrice: 355 },
-    { category: 'hardware', itemKey: 'item-122', itemName: "SHIHLIN BML32 230/240V C40 G", details: {}, currentStock: 81, unitPrice: 569 },
-    { category: 'breakers', itemKey: 'item-123', itemName: "SHIHLIN MCCB BM100-ABN 4P 80A w/accessories", details: {}, currentStock: 158, unitPrice: 890 },
-    { category: 'hardware', itemKey: 'item-124', itemName: "SHIHLIN PHL 33   400LY15V-C32", details: {}, currentStock: 76, unitPrice: 345 },
-    { category: 'hardware', itemKey: 'item-125', itemName: "Smoke Test", details: {}, currentStock: 158, unitPrice: 137 },
-    { category: 'enclosures', itemKey: 'item-126', itemName: "SQUARE BOX", details: {}, currentStock: 213, unitPrice: 1191 },
-    { category: 'enclosures', itemKey: 'item-127', itemName: "SQUARE BOX COVER", details: {}, currentStock: 159, unitPrice: 844 },
-    { category: 'hardware', itemKey: 'item-128', itemName: "TOX SCREW 8\"", details: {}, currentStock: 228, unitPrice: 1527 },
-    { category: 'fittings', itemKey: 'item-129', itemName: "UNIT STRUT CLAMP 3/4\" MCGILL", details: {}, currentStock: 137, unitPrice: 1212 },
-    { category: 'enclosures', itemKey: 'item-130', itemName: "UTILITY BOX", details: {}, currentStock: 171, unitPrice: 736 },
-    { category: 'conduits', itemKey: 'item-131', itemName: "YL /  \"LB\" 1/2\"  Straight Threaded Conduit Bodies Series w/coverMCGIL", details: {}, currentStock: 160, unitPrice: 1297 },
-    { category: 'conduits', itemKey: 'item-132', itemName: "YL /  \"LB\" 1/2\" Threaded Conduit Bodies Series w/cover MCGIL", details: {}, currentStock: 93, unitPrice: 119 },
-    { category: 'conduits', itemKey: 'item-133', itemName: "YL /  \"LB\" 3/4\"  Straight Threaded Conduit Bodies Series w/cover MCGIL", details: {}, currentStock: 125, unitPrice: 480 },
-    { category: 'hardware', itemKey: 'item-134', itemName: "YOKOHAMA Transformer 380-400-440x", details: {}, currentStock: 289, unitPrice: 1478 },
-    { category: 'breakers', itemKey: 'item-135', itemName: "BM250CN3P125A: SHIHLIN B250-CN 3P125A MCCB INDUSTRIAL", details: {}, currentStock: 107, unitPrice: 1456 },
-    { category: 'hardware', itemKey: 'item-136', itemName: "SHTBM250SNAC220V: SHIHLIN SHUNT TRIP FOR BM250SN/HN", details: {}, currentStock: 160, unitPrice: 347 },
-];
-
-
-  for (const c of catalog) {
-      tx.objectStore(COLLECTIONS.MASTER_DATA_CATALOG).put(c);
-  }
-
-  await tx.done;
-}
-

@@ -1,3 +1,4 @@
+import { liveRefresh } from '../../services/realtime.js';
 import { fetchPendingQAInspections, updateInspectionStatus } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
@@ -37,6 +38,7 @@ export default class QAReviewQueueView {
         });
 
         this.loadQueue(container.querySelector('#qa-queue-container'), previewModal, previewModal.querySelector('#preview-content'));
+        liveRefresh('mgr-qa', ['ocular_inspections'], container, () => this.loadQueue(container.querySelector('#qa-queue-container'), previewModal, previewModal.querySelector('#preview-content')));
 
         return container;
     }

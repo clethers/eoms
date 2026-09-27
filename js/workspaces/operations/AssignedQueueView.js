@@ -1,3 +1,4 @@
+import { liveRefresh } from '../../services/realtime.js';
 import { fetchAllAssignedInspections } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
@@ -79,6 +80,11 @@ export default class AssignedQueueView {
             listDiv.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
         }
         
+        liveRefresh('ops-assigned', ['ocular_inspections'], container, async () => {
+            const fresh = await this.render();
+            if (container.isConnected) container.replaceWith(fresh);
+        });
+
         return container;
     }
 }

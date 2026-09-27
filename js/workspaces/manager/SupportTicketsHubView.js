@@ -1,3 +1,4 @@
+import { liveRefresh } from '../../services/realtime.js';
 import { fetchSupportTickets, resolveSupportTicket } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
@@ -19,6 +20,7 @@ export default class SupportTicketsHubView {
         `;
 
         this.loadTickets(container.querySelector('#tickets-hub-list'));
+        liveRefresh('mgr-tickets', ['support_tickets'], container, () => this.loadTickets(container.querySelector('#tickets-hub-list')));
 
         return container;
     }

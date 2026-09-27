@@ -1,3 +1,4 @@
+import { liveRefresh } from '../../services/realtime.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML } from '../../shared/security.js';
 
@@ -78,6 +79,11 @@ export default class ReadyQueueView {
             listDiv.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
         }
         
+        liveRefresh('ops-ready', ['installation_records'], container, async () => {
+            const fresh = await this.render();
+            if (container.isConnected) container.replaceWith(fresh);
+        });
+
         return container;
     }
 }

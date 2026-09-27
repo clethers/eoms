@@ -1,3 +1,4 @@
+import { liveRefresh } from '../../services/realtime.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { getProfiles } from '../../services/userService.js';
 import { fetchAllAssignedInspections, fetchPendingInstallations, fetchMySubmittedInspections } from '../../services/dataService.js';
@@ -22,6 +23,7 @@ export default class HomeView {
         `;
 
         this.loadHome(container.querySelector('#home-content'));
+        liveRefresh('ops-home', ['ocular_inspections', 'installation_records'], container, () => this.loadHome(container.querySelector('#home-content')));
 
         return container;
     }

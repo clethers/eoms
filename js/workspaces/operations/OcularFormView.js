@@ -96,10 +96,15 @@ export default class OcularFormView {
 
         const saveBtn = this.container.querySelector('#save-draft-btn');
         if (saveBtn) saveBtn.addEventListener('click', async () => {
-            this.saveData();
-            await this.saveAsDraft();
-            alert('Draft saved.');
-            navigateTo('/ocular'); // ADD THIS
+            try {
+                this.saveData();
+                await this.saveAsDraft();
+                alert('Draft saved.');
+                navigateTo('/ocular'); // ADD THIS
+            } catch (err) {
+                console.error('Failed to save draft:', err);
+                alert('Error saving draft: ' + (err && err.message ? err.message : err));
+            }
         });
         
         const form = this.container.querySelector('form');
@@ -115,11 +120,19 @@ export default class OcularFormView {
             this.formData.status = 'PENDING_QA';
             
             // clear QA trail
-            delete this.formData.qaNotes;
-            delete this.formData.qaReviewedBy;
-            delete this.formData.qaReviewedAt;
+            // (set to null, not delete: saveOcularInspection merges onto the stored record)
+            this.formData.qaNotes = null;
+            this.formData.qaReviewedBy = null;
+            this.formData.qaReviewedAt = null;
             
-            await saveOcularDraft(this.formData, this.formData.id);
+            try {
+                const saved = await saveOcularDraft(this.formData, this.formData.id);
+                if (saved && saved.id && !this.formData.id) this.formData.id = saved.id;
+            } catch (err) {
+                console.error('Failed to submit inspection:', err);
+                alert('Error submitting inspection: ' + (err && err.message ? err.message : err));
+                return;
+            }
             if (this.formData.id) {
                 try {
                     await updateLeadStageByOcularId(this.formData.id, 'SITE_VISIT_COMPLETED');

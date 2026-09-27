@@ -160,14 +160,11 @@ export default class InstallationFormView {
                 
                 this.formData.photoAttachments = this.photos;
                 this.formData.createdBy = getActiveProfileId();
-                this.formData.status = 'COMPLETED';
+                this.formData.status = 'COMMISSIONED';
                 
                 try {
+                    // saveInstallationRecord also moves the linked lead to INSTALLATION_COMPLETE
                     await saveInstallationRecord(this.formData);
-                    try {
-                        const { updateLeadStageByOcularId } = await import('../../services/dataService.js');
-                        await updateLeadStageByOcularId(this.formData.ocularId, 'JOB_CHECKOUT_COMPLETE');
-                    } catch(e) {}
                     
                     alert('Installation record submitted successfully!');
                     this.step = 0;

@@ -1,5 +1,6 @@
 import * as db from './localDb.js';
 import { logEvent } from './auditLogService.js';
+import { getCatalog } from './masterDataService.js';
 import { getActiveProfileId } from '../components/ActiveProfilePicker.js';
 
 const { COLLECTIONS, get, getAll, put, remove, getByIndex, getAllByIndex, dbEvents } = db;
@@ -84,14 +85,28 @@ export async function archiveInspection(id) {
   }
 }
 
+// Merge form data onto the existing record so dispatch fields (assignedTeam, scheduledDate, ocularId, ...) survive.
+async function mergeWithExisting(collection, formData) {
+  if (formData && formData.id) {
+    const existing = await get(collection, formData.id);
+    if (existing) return Object.assign({}, existing, formData, { id: existing.id });
+  }
+  return formData;
+}
+
 export async function saveOcularInspection(formData) {
+  formData = await mergeWithExisting(COLLECTIONS.OCULAR_INSPECTIONS, formData);
   const result = await put(COLLECTIONS.OCULAR_INSPECTIONS, formData);
-  if (formData.status === 'PENDING_APPROVAL') {
-    // Notify all Managers
-    const profiles = await getAll(COLLECTIONS.PROFILES);
-    const managers = profiles.filter(p => p.role === 'customer_care_manager' || p.role === 'admin');
-    for (const m of managers) {
-        await createNotification(m.id, `New Ocular Submitted: ${formData.rnNo}`, '/manager/qa');
+  if (formData.status === 'PENDING_QA') {
+    // Notify Customer Care + Admin (never block the save on a notification failure)
+    try {
+      const profiles = await getAll(COLLECTIONS.PROFILES);
+      const managers = profiles.filter(p => p.role === 'customer_care_manager' || p.role === 'admin');
+      for (const m of managers) {
+          await createNotification(m.id, `New Ocular Submitted: ${formData.rnNo}`, '/manager/qa');
+      }
+    } catch(e) {
+      console.error('Error notifying managers of ocular submission:', e);
     }
   }
   return result;
@@ -109,14 +124,28 @@ export async function fetchAllInstallations() {
 }
 
 export async function saveInstallationRecord(formData) {
+  formData = await mergeWithExisting(COLLECTIONS.INSTALLATION_RECORDS, formData);
   const result = await put(COLLECTIONS.INSTALLATION_RECORDS, formData);
   
   if (formData.status === 'COMMISSIONED') {
-    // Notify all Managers
-    const profiles = await getAll(COLLECTIONS.PROFILES);
-    const managers = profiles.filter(p => p.role === 'customer_care_manager' || p.role === 'admin');
-    for (const m of managers) {
-        await createNotification(m.id, `Installation Completed: ${formData.installationNo}`, '/manager/pipeline');
+    // Notify all Managers (never block the save on a notification failure)
+    try {
+      const profiles = await getAll(COLLECTIONS.PROFILES);
+      const managers = profiles.filter(p => p.role === 'customer_care_manager' || p.role === 'admin');
+      for (const m of managers) {
+          await createNotification(m.id, `Installation Completed: ${formData.installationNo}`, '/manager/pipeline');
+      }
+    } catch(e) {
+      console.error('Error notifying managers of installation:', e);
+    }
+
+    // Move linked lead to INSTALLATION_COMPLETE
+    if (formData.ocularId) {
+      try {
+        await updateLeadStageByOcularId(formData.ocularId, 'INSTALLATION_COMPLETE');
+      } catch(e) {
+        console.error('Error updating lead stage for installation:', e);
+      }
     }
     
     // Deduct stock
@@ -328,8 +357,8 @@ export async function dispatchInstallationFromLead(leadId, teamId, installationN
   const savedInstallation = await put(COLLECTIONS.INSTALLATION_RECORDS, installationData);
   
   lead.installationId = savedInstallation.id;
-  lead.stage = 'INSTALL_SCHEDULED';
-  lead['stageINSTALL_SCHEDULEDAt'] = new Date().toISOString();
+  lead.stage = 'INSTALLATION_SCHEDULED';
+  lead['stageINSTALLATION_SCHEDULEDAt'] = new Date().toISOString();
   await put(COLLECTIONS.SALES_LEADS, lead);
 
   await createNotification(teamId, `New Installation Dispatched: ${installationNo} for ${lead.name}`, '/ocular/ready');

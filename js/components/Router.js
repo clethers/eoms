@@ -1,6 +1,5 @@
 import { renderWorkspaceSwitcher } from './WorkspaceSwitcher.js';
-import { getActiveProfileId } from './ActiveProfilePicker.js';
-import { getProfiles } from '../services/userService.js';
+import { getActiveProfile, roleHome, isPathAllowed } from './ActiveProfilePicker.js';
 
 const routes = [
     { prefix: '/admin', importFn: () => import('../workspaces/AdminWorkspace.js') },
@@ -14,27 +13,25 @@ export async function navigateTo(url) {
 }
 
 export async function router() {
+    // Nothing renders until a signed-in profile is set (main.js shows login).
+    const profile = getActiveProfile();
+    if (!profile) return;
+
     let path = location.pathname;
-    
-    // Default route logic
-    if (path === '/' || path === '') {
-        const activeId = getActiveProfileId();
-        let defaultPath = '/ocular/home';
-        
-        if (activeId) {
-            const profiles = await getProfiles();
-            const profile = profiles.find(p => p.id === activeId);
-            if (profile) {
-                if (profile.role === 'admin') defaultPath = '/admin';
-                else if (profile.role === 'field_inspector') defaultPath = '/ocular/home';
-                else defaultPath = '/manager';
-            }
-        }
-        
-        path = defaultPath;
+    const home = roleHome(profile.role);
+    if (!home) {
+        document.getElementById('app-content').innerHTML =
+            '<div class="card" style="margin: 2rem;"><h2>No workspace</h2><p>Your role has no workspace assigned. Contact the admin.</p></div>';
+        document.getElementById('workspace-switcher-container').innerHTML = '';
+        return;
+    }
+
+    // Default route + role guard: blocked or unknown workspaces go to the role home.
+    if (path === '/' || path === '' || !isPathAllowed(profile.role, path)) {
+        path = home;
         history.replaceState(null, null, path);
     }
-    
+
     // Update workspace switcher
     await renderWorkspaceSwitcher('workspace-switcher-container', path);
     

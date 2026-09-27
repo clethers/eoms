@@ -1,7 +1,28 @@
+import { liveRefresh } from '../../services/realtime.js';
 import { fetchAllSalesLeads, createSalesLead, updateSalesLeadStage, bulkImportSalesLeads, archiveSalesLead, dispatchOcularFromLead } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { getProfiles } from '../../services/userService.js';
+
+// Crew picker for dispatch modals: active field inspectors only, no default selection.
+async function buildCrewSelectHtml(selectId) {
+    let crew = [];
+    try {
+        const profiles = await getProfiles();
+        crew = profiles.filter(p => p.role === 'field_inspector' && (!p.status || p.status === 'ACTIVE'));
+        crew.sort((a, b) => String(a.fullName || '').localeCompare(String(b.fullName || '')));
+    } catch (e) {
+        console.error('Failed to load crew list:', e);
+    }
+    if (crew.length === 0) {
+        return `<select id="${selectId}" disabled><option value="">No active Operations users</option></select>`;
+    }
+    return `<select id="${selectId}" required>
+        <option value="" selected disabled>Select crew member…</option>
+        ${crew.map(p => `<option value="${Number(p.id)}">${escapeHTML(p.fullName || p.email || ('User ' + p.id))}</option>`).join('')}
+    </select>`;
+}
 
 export const STAGES = [
     'INITIAL_CONTACT',
@@ -94,6 +115,10 @@ export default class SalesPipelineView {
         });
 
         this.loadPipeline(container.querySelector('#pipeline-table-container'));
+        liveRefresh('mgr-pipeline', ['sales_leads'], container, () => {
+            this.allLeads = null; // force refetch
+            return this.loadPipeline(container.querySelector('#pipeline-table-container'));
+        });
 
         return container;
     }
@@ -496,8 +521,9 @@ export default class SalesPipelineView {
             });
 
             container.querySelectorAll('.dispatch-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     const id = parseInt(e.target.dataset.id, 10);
+                    const crewSelectHtml = await buildCrewSelectHtml('dispatch-assignee');
                     
                     const modal = document.createElement('div');
                     modal.style.position = 'fixed';
@@ -514,8 +540,8 @@ export default class SalesPipelineView {
                                 <input type="text" id="dispatch-rn" value="RN-${Date.now().toString().slice(-6)}">
                             </div>
                             <div class="form-group">
-                                <label>Assignee (Profile ID)</label>
-                                <input type="number" id="dispatch-assignee" value="1">
+                                <label>Assign Crew Member</label>
+                                ${crewSelectHtml}
                             </div>
                             <div class="form-group">
                                 <label>Scheduled Date & Time</label>
@@ -536,6 +562,7 @@ export default class SalesPipelineView {
                     modal.querySelector('#dispatch-confirm').addEventListener('click', async () => {
                         const rnNo = modal.querySelector('#dispatch-rn').value;
                         const teamId = parseInt(modal.querySelector('#dispatch-assignee').value, 10);
+                        if (modal.querySelector('#dispatch-assignee').disabled) { alert('No active Operations users to dispatch to.'); return; }
                         const scheduledDate = modal.querySelector('#dispatch-date').value;
                         
                         if (!rnNo || !teamId || !scheduledDate) {
@@ -556,8 +583,9 @@ export default class SalesPipelineView {
             });
 
             container.querySelectorAll('.dispatch-install-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     const id = parseInt(e.target.dataset.id, 10);
+                    const crewSelectHtml = await buildCrewSelectHtml('dispatch-install-assignee');
                     
                     const modal = document.createElement('div');
                     modal.style.position = 'fixed';
@@ -574,8 +602,8 @@ export default class SalesPipelineView {
                                 <input type="text" id="dispatch-install-no" value="INST-${Date.now().toString().slice(-6)}">
                             </div>
                             <div class="form-group">
-                                <label>Assignee (Profile ID)</label>
-                                <input type="number" id="dispatch-install-assignee" value="1">
+                                <label>Assign Crew Member</label>
+                                ${crewSelectHtml}
                             </div>
                             <div class="form-group">
                                 <label>Scheduled Date & Time</label>
@@ -596,6 +624,7 @@ export default class SalesPipelineView {
                     modal.querySelector('#dispatch-install-confirm').addEventListener('click', async () => {
                         const instNo = modal.querySelector('#dispatch-install-no').value;
                         const teamId = parseInt(modal.querySelector('#dispatch-install-assignee').value, 10);
+                        if (modal.querySelector('#dispatch-install-assignee').disabled) { alert('No active Operations users to dispatch to.'); return; }
                         const scheduledDate = modal.querySelector('#dispatch-install-date').value;
                         
                         if (!instNo || !teamId || !scheduledDate) {

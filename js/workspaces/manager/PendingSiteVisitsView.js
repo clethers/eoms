@@ -1,3 +1,4 @@
+import { liveRefresh } from '../../services/realtime.js';
 import { getAll, COLLECTIONS } from '../../services/localDb.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
@@ -13,6 +14,7 @@ export default class PendingSiteVisitsView {
         `;
 
         this.loadVisits(container.querySelector('#visits-list'));
+        liveRefresh('mgr-pendingvisits', ['ocular_inspections'], container, () => this.loadVisits(container.querySelector('#visits-list')));
 
         return container;
     }
