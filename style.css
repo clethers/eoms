@@ -843,4 +843,11 @@ td > select, td > input:not([type="checkbox"]):not([type="radio"]) { margin: 0; 
   .form-nav, .form-nav__start, .form-nav__end { width: 100%; }
   .form-nav button { flex: 1 1 auto; }
 }
+
+/* Textareas should match the app font, not the browser's monospace default */
+textarea { font: inherit; }
+
+/* Shared destructive action style (e.g. signature "Clear" buttons) */
+.btn-danger { background: #ef4444; color: white; }
+.btn-danger:hover { background: #dc2626; }
 /* ===== end alignment pass ===== */

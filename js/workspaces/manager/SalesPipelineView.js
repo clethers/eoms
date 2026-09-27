@@ -168,7 +168,7 @@ export default class SalesPipelineView {
                                     ${l.ocularId ? `<button class="view-reports-btn btn-sm" data-id="${l.id}" title="View Project Reports" style="background-color: #f59e0b; color: white;">Reports</button>` : ''}
                                     ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Ocular" style="background-color: var(--brand-green); color: white;">Dispatch</button>` : ''}
                                     ${l.stage === 'SITE_VISIT_COMPLETED' ? `<button class="quote-btn btn-sm" data-id="${l.id}" title="Generate Quote" style="background-color: #8b5cf6; color: white;">Quote</button>` : ''}
-                                    ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn btn-sm" data-id="${l.id}" title="Dispatch Install" style="background-color: #10b981; color: white;">Install</button>` : ''}
+                                    ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn btn-sm" data-id="${l.id}" title="Dispatch Install">Install</button>` : ''}
                                     </div>
                                 </td>
                             </tr>
@@ -615,7 +615,7 @@ export default class SalesPipelineView {
                             </div>
                             <div class="modal-actions">
                                 <button id="dispatch-install-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
-                                <button id="dispatch-install-confirm" style="background: #10b981; color: white;">Dispatch</button>
+                                <button id="dispatch-install-confirm">Dispatch</button>
                             </div>
                         </div>
                     `;

@@ -62,7 +62,7 @@ export default class OcularFormView {
                     <div class="form-nav__end">
                         ${this.step === 4 ? '<button type="button" id="save-draft-btn">Save Draft</button>' : ''}
                         ${this.step < 4 ? '<button type="button" id="next-btn">Next</button>' : ''}
-                        ${this.step === 4 ? '<button type="submit" id="submit-btn" style="background-color: #10b981; color: white;">Submit for Approval</button>' : ''}
+                        ${this.step === 4 ? '<button type="submit" id="submit-btn">Submit for Approval</button>' : ''}
                     </div>
                 </div>
             </form>
@@ -565,13 +565,13 @@ export default class OcularFormView {
                 <label>Inspector Name & Signature</label>
                 <input type="text" name="inspectedByName" value="${this.formData.inspectedByName || ''}" placeholder="Inspector Name" required>
                 <canvas id="inspector-pad" width="400" height="200" style="border: 1px solid #ccc; display: block;"></canvas>
-                <div class="sig-actions"><button type="button" id="clear-inspector">Clear</button></div>
+                <div class="sig-actions"><button type="button" id="clear-inspector" class="btn-danger">Clear</button></div>
             </div>
             <div class="form-group sig-field">
                 <label>Witness Name & Signature</label>
                 <input type="text" name="witnessedByName" value="${this.formData.witnessedByName || ''}" placeholder="Witness Name" required>
                 <canvas id="witness-pad" width="400" height="200" style="border: 1px solid #ccc; display: block;"></canvas>
-                <div class="sig-actions"><button type="button" id="clear-witness">Clear</button></div>
+                <div class="sig-actions"><button type="button" id="clear-witness" class="btn-danger">Clear</button></div>
             </div>
         `;
     }

@@ -61,7 +61,7 @@ export default class QAReviewQueueView {
                                 <td>
                                     <div class="table-actions">
                                     <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="preview">View Summary</button>
-                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="approve" style="background: #10b981; color: white;">Approve</button>
+                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="approve">Approve</button>
                                     <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="reject" style="background: #ef4444; color: white;">Reject</button>
                                     </div>
                                 </td>

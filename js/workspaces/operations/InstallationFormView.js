@@ -47,7 +47,7 @@ export default class InstallationFormView {
                     </div>
                     <div class="form-nav__end">
                         ${this.step < 4 ? '<button type="button" id="next-btn">Next</button>' : ''}
-                        ${this.step === 4 ? '<button type="submit" id="submit-btn" style="background-color: #10b981; color: white;">Submit Installation Record</button>' : ''}
+                        ${this.step === 4 ? '<button type="submit" id="submit-btn">Submit Installation Record</button>' : ''}
                     </div>
                 </div>
             `;
@@ -422,13 +422,13 @@ export default class InstallationFormView {
                     <label style="font-size: 1.1rem; border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Installer Name & Signature</label>
                     <input type="text" name="installerName" value="${this.formData.installerName || ''}" placeholder="Enter Installer Name" required>
                     <canvas id="installer-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; width: 100%; border-radius: 4px; background: white;"></canvas>
-                    <div class="sig-actions"><button type="button" id="clear-installer" style="background: #ef4444;">Clear Signature</button></div>
+                    <div class="sig-actions"><button type="button" id="clear-installer" class="btn-danger">Clear Signature</button></div>
                 </div>
                 <div class="form-group sig-field" style="margin: 0; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
                     <label style="font-size: 1.1rem; border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Client Rep Name & Signature</label>
                     <input type="text" name="clientRepName" value="${this.formData.clientRepName || ''}" placeholder="Enter Client Rep Name" required>
                     <canvas id="clientrep-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; width: 100%; border-radius: 4px; background: white;"></canvas>
-                    <div class="sig-actions"><button type="button" id="clear-clientrep" style="background: #ef4444;">Clear Signature</button></div>
+                    <div class="sig-actions"><button type="button" id="clear-clientrep" class="btn-danger">Clear Signature</button></div>
                 </div>
             </div>
         `;

@@ -146,7 +146,7 @@ export default class MasterDataCatalogView {
                             </div>
                             <div class="modal-actions">
                                 <button id="edit-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
-                                <button id="edit-save" style="background: #10b981; color: white;">Save Changes</button>
+                                <button id="edit-save">Save Changes</button>
                             </div>
                         </div>
                     `;
