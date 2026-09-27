@@ -1,3 +1,4 @@
+import { formatDateTime } from '../../shared/dateFormat.js';
 import { fetchAllInspections, archiveInspection } from '../../services/dataService.js';
 import { escapeHTML } from '../../shared/security.js';
 import { printOcularCertificate } from '../../shared/certificates.js';
@@ -39,7 +40,7 @@ export default class ClientDirectoryView {
                                 <td>${escapeHTML(i.rnNo)}</td>
                                 <td>${escapeHTML(i.clientName)}</td>
                                 <td>${escapeHTML(i.locationAddress || 'N/A')}</td>
-                                <td>${escapeHTML(i.dateTime || 'N/A')}</td>
+                                <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>
                                     <button class="print-btn" data-id="${i.id}" title="Print Certificate" style="font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; background: var(--brand-green); color: white;">Print</button>
                                     <button class="archive-btn" data-id="${i.id}" title="Archive Record" style="background-color: #ef4444; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Archive</button>
