@@ -6,7 +6,7 @@ export default class DashboardView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>System Dashboard</h2>
+            <h2>Dashboard</h2>
             <div id="admin-dashboard-content" style="display:flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
                 <div class="skeleton skeleton-card" style="flex: 1; min-width: 150px; height: 120px; margin: 0;"></div>
                 <div class="skeleton skeleton-card" style="flex: 1; min-width: 150px; height: 120px; margin: 0;"></div>

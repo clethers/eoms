@@ -52,7 +52,7 @@ export default class OcularFormView {
         else if (this.step === 4) content = this.renderStep4();
         
         this.container.innerHTML = `
-            <h2>Ocular Inspection Form - Step ${this.step} of 4</h2>
+            <h2>New Inspection - Step ${this.step} of 4</h2>
             <form id="ocular-form" style="display: flex; flex-direction: column; flex: 1;">
                 <div style="flex: 1; display: flex; flex-direction: column;">
                     ${content}

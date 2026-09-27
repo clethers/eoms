@@ -53,9 +53,9 @@ export async function updateInspectionStatus(id, newStatus, extra = {}) {
   Object.assign(record, { status: newStatus }, extra);
   
   if (newStatus === 'APPROVED' && record.assignedTeam) {
-    await createNotification(record.assignedTeam, `Ocular ${record.rnNo} was Approved.`, '/ocular/history');
+    await createNotification(record.assignedTeam, `Inspection approved: ${record.rnNo}`, '/ocular/history');
   } else if (newStatus === 'REJECTED' && record.assignedTeam) {
-    await createNotification(record.assignedTeam, `Ocular ${record.rnNo} was Rejected. Please review.`, '/ocular/history');
+    await createNotification(record.assignedTeam, `Inspection needs revision: ${record.rnNo}`, '/ocular/history');
   }
 
   return put(COLLECTIONS.OCULAR_INSPECTIONS, record);
@@ -103,7 +103,7 @@ export async function saveOcularInspection(formData) {
       const profiles = await getAll(COLLECTIONS.PROFILES);
       const managers = profiles.filter(p => p.role === 'customer_care_manager' || p.role === 'admin');
       for (const m of managers) {
-          await createNotification(m.id, `New Ocular Submitted: ${formData.rnNo}`, '/manager/qa');
+          await createNotification(m.id, `New inspection for review: ${formData.rnNo}`, '/manager/qa');
       }
     } catch(e) {
       console.error('Error notifying managers of ocular submission:', e);
@@ -133,7 +133,7 @@ export async function saveInstallationRecord(formData) {
       const profiles = await getAll(COLLECTIONS.PROFILES);
       const managers = profiles.filter(p => p.role === 'customer_care_manager' || p.role === 'admin');
       for (const m of managers) {
-          await createNotification(m.id, `Installation Completed: ${formData.installationNo}`, '/manager/pipeline');
+          await createNotification(m.id, `Installation completed: ${formData.installationNo}`, '/manager/pipeline');
       }
     } catch(e) {
       console.error('Error notifying managers of installation:', e);
@@ -173,7 +173,7 @@ export async function createSupportTicket(ticketData) {
   const profiles = await getAll(COLLECTIONS.PROFILES);
   const managers = profiles.filter(p => p.role === 'customer_care_manager' || p.role === 'admin');
   for (const m of managers) {
-      await createNotification(m.id, `New Support Ticket: ${ticketData.subject}`, '/manager/tickets');
+      await createNotification(m.id, `New support ticket: ${ticketData.subject}`, '/manager/tickets');
   }
   
   return result;
@@ -334,7 +334,7 @@ export async function dispatchOcularFromLead(leadId, teamId, rnNo, scheduledDate
   lead['stageSITE_VISIT_SCHEDULEDAt'] = new Date().toISOString();
   await put(COLLECTIONS.SALES_LEADS, lead);
 
-  await createNotification(teamId, `New Ocular Dispatched: ${rnNo} for ${lead.name}`, '/ocular/assigned');
+  await createNotification(teamId, `New inspection assigned: ${rnNo} – ${lead.name}`, '/ocular/assigned');
   
   return savedInspection;
 }
@@ -361,7 +361,7 @@ export async function dispatchInstallationFromLead(leadId, teamId, installationN
   lead['stageINSTALLATION_SCHEDULEDAt'] = new Date().toISOString();
   await put(COLLECTIONS.SALES_LEADS, lead);
 
-  await createNotification(teamId, `New Installation Dispatched: ${installationNo} for ${lead.name}`, '/ocular/ready');
+  await createNotification(teamId, `New installation assigned: ${installationNo} – ${lead.name}`, '/ocular/ready');
   
   return savedInstallation;
 }

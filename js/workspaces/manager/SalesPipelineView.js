@@ -42,7 +42,7 @@ export default class SalesPipelineView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Sales Pipeline</h2>
+            <h2>Customers</h2>
             <div class="form-panel">
                 <h3>Add New Lead</h3>
                 <form id="add-lead-form" class="form-row">

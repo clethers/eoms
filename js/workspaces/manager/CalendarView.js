@@ -1,5 +1,6 @@
 import { getAll, COLLECTIONS } from '../../services/localDb.js';
 import { escapeHTML } from '../../shared/security.js';
+import { formatStatus } from '../../shared/statusFormatter.js';
 
 export default class CalendarView {
     constructor() {
@@ -16,7 +17,7 @@ export default class CalendarView {
         
         this.container.innerHTML = `
             <div class="page-header">
-                <h2>Dispatch Calendar</h2>
+                <h2>Calendar</h2>
                 <div class="toolbar">
                     <button id="prev-month" style="background: #e2e8f0;">&larr; Prev</button>
                     <span id="month-label" style="font-size: 1.2rem; font-weight: bold; min-width: 150px; text-align: center;"></span>
@@ -154,7 +155,7 @@ export default class CalendarView {
                     <strong>Client:</strong> ${escapeHTML(event.clientName)}<br>
                     <strong>Ref No:</strong> ${escapeHTML(refNo || 'N/A')}<br>
                     <strong>Schedule:</strong> ${new Date(event.scheduledDate).toLocaleString()}<br>
-                    <strong>Status:</strong> <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(event.status)}</span><br>
+                    <strong>Status:</strong> <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(event.status))}</span><br>
                     <strong>Assigned Team ID:</strong> ${event.assignedTeam || 'Unassigned'}<br>
                     <strong>Address:</strong> ${escapeHTML(addr || 'N/A')}
                 </div>

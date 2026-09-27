@@ -30,7 +30,8 @@ export function roleLabel(role) {
 export function roleHome(role) {
     if (role === 'admin') return '/admin';
     if (role === 'operations') return '/ocular/home';
-    if (role === 'customer_care_manager' || role === 'lead_engineer') return '/manager';
+    if (role === 'customer_care_manager') return '/manager/pipeline';
+    if (role === 'lead_engineer') return '/manager';
     return null;
 }
 

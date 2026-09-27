@@ -1,5 +1,6 @@
 import { getAll, COLLECTIONS } from '../../services/localDb.js';
 import { getCatalog } from '../../services/masterDataService.js';
+import { formatStatus } from '../../shared/statusFormatter.js';
 
 export default class AnalyticsDashboardView {
     async render() {
@@ -7,7 +8,7 @@ export default class AnalyticsDashboardView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Business Analytics Dashboard</h2>
+            <h2>Reports</h2>
             <div id="analytics-content">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; margin-top: 1rem;">
                     <div class="skeleton skeleton-card"></div>
@@ -46,7 +47,7 @@ export default class AnalyticsDashboardView {
             // Leads by Stage for Pie Chart
             const stageCounts = {};
             leads.forEach(l => {
-                stageCounts[l.stage] = (stageCounts[l.stage] || 0) + 1;
+                const stageLabel = formatStatus(l.stage); stageCounts[stageLabel] = (stageCounts[stageLabel] || 0) + 1;
             });
 
             // Low Stock Items for Bar Chart
@@ -73,7 +74,7 @@ export default class AnalyticsDashboardView {
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                     <div style="border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; background: white;">
-                        <h3 style="margin-top: 0; text-align: center;">Sales Pipeline Distribution</h3>
+                        <h3 style="margin-top: 0; text-align: center;">Customers by Stage</h3>
                         <div style="position: relative; height: 300px; width: 100%;">
                             <canvas id="pipelineChart"></canvas>
                         </div>

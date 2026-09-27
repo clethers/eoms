@@ -13,14 +13,14 @@ export default class AdminWorkspace {
             <aside class="sidebar">
                 <nav class="sidebar-nav">
                     <div class="sidebar-category">Overview</div>
-                    <a href="/admin/dashboard" class="${path === '/admin/dashboard' || path === '/admin' ? 'active' : ''}" data-link>System Dashboard</a>
+                    <a href="/admin/dashboard" class="${path === '/admin/dashboard' || path === '/admin' ? 'active' : ''}" data-link>Dashboard</a>
                     
                     <div class="sidebar-category">Security & Access</div>
-                    <a href="/admin/users" class="${path === '/admin/users' ? 'active' : ''}" data-link>User Management</a>
+                    <a href="/admin/users" class="${path === '/admin/users' ? 'active' : ''}" data-link>Users</a>
                     <a href="/admin/audit" class="${path === '/admin/audit' ? 'active' : ''}" data-link>Audit Logs</a>
                     
                     <div class="sidebar-category">Core Data</div>
-                    <a href="/admin/clients" class="${path === '/admin/clients' ? 'active' : ''}" data-link>Client Directory</a>
+                    <a href="/admin/clients" class="${path === '/admin/clients' ? 'active' : ''}" data-link>Inspection Records</a>
                     <a href="/admin/inventory" class="${path === '/admin/inventory' ? 'active' : ''}" data-link>Inventory</a>
                 </nav>
             </aside>

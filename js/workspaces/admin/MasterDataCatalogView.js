@@ -7,7 +7,7 @@ export default class MasterDataCatalogView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Inventory Database</h2>
+            <h2>Inventory</h2>
             <div class="form-panel">
                 <h3>Add New Inventory Item</h3>
                 <form id="add-catalog-form" class="form-row">

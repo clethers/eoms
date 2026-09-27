@@ -19,17 +19,17 @@ export default class OperationsWorkspace {
                     <a href="/ocular/home" class="${path === '/ocular/home' ? 'active' : ''}" data-link>Home</a>
 
                     <div class="sidebar-category">Field Work</div>
-                    <a href="/ocular" class="${path === '/ocular' ? 'active' : ''}" data-link>Site Inspection</a>
-                    <a href="/ocular/assigned" class="${path === '/ocular/assigned' ? 'active' : ''}" data-link>Pending Inspection</a>
+                    <a href="/ocular" class="${path === '/ocular' ? 'active' : ''}" data-link>New Inspection</a>
+                    <a href="/ocular/assigned" class="${path === '/ocular/assigned' ? 'active' : ''}" data-link>My Inspections</a>
                     
-                    <div class="sidebar-category">INSTALLATIONS</div>
-                    <a href="/ocular/ready" class="${path === '/ocular/ready' ? 'active' : ''}" data-link>All Installations</a>
-                    <a href="/ocular/installation" class="${path === '/ocular/installation' ? 'active' : ''}" data-link>Installation Form</a>
+                    <div class="sidebar-category">Installations</div>
+                    <a href="/ocular/ready" class="${path === '/ocular/ready' ? 'active' : ''}" data-link>My Installations</a>
+                    <a href="/ocular/installation" class="${path === '/ocular/installation' ? 'active' : ''}" data-link>New Installation</a>
                     
                     <div class="sidebar-category">Activity & Support</div>
-                    <a href="/ocular/drafts" class="${path === '/ocular/drafts' ? 'active' : ''}" data-link>Saved Drafts</a>
-                    <a href="/ocular/history" class="${path === '/ocular/history' ? 'active' : ''}" data-link>My History</a>
-                    <a href="/ocular/tickets" class="${path === '/ocular/tickets' ? 'active' : ''}" data-link>Help & Support</a>
+                    <a href="/ocular/drafts" class="${path === '/ocular/drafts' ? 'active' : ''}" data-link>Drafts</a>
+                    <a href="/ocular/history" class="${path === '/ocular/history' ? 'active' : ''}" data-link>History</a>
+                    <a href="/ocular/tickets" class="${path === '/ocular/tickets' ? 'active' : ''}" data-link>Support Tickets</a>
                 </nav>
             </aside>
             <main class="main-view" id="operations-main">

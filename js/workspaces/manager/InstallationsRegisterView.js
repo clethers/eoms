@@ -1,6 +1,7 @@
 import { formatDateTime } from '../../shared/dateFormat.js';
 import { fetchAllInstallations } from '../../services/dataService.js';
 import { escapeHTML } from '../../shared/security.js';
+import { formatStatus } from '../../shared/statusFormatter.js';
 import { printInstallationRegister } from '../../shared/certificates.js';
 
 export default class InstallationsRegisterView {
@@ -9,7 +10,7 @@ export default class InstallationsRegisterView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Installations Register</h2>
+            <h2>Installations</h2>
             <div id="installations-table-container" style="margin-top: 1rem;">
                 <div class="skeleton skeleton-table-row"></div>
                 <div class="skeleton skeleton-table-row"></div>
@@ -40,7 +41,7 @@ export default class InstallationsRegisterView {
                                 <td>${escapeHTML(i.installationNo)}</td>
                                 <td>${escapeHTML(i.clientName)}</td>
                                 <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
-                                <td>${escapeHTML(i.status)}</td>
+                                <td>${escapeHTML(formatStatus(i.status))}</td>
                                 <td>
                                     <button class="print-btn btn-sm" data-id="${i.id}">Print Register</button>
                                 </td>

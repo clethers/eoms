@@ -12,7 +12,7 @@ export default class SavedDraftsView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>My Saved Drafts</h2>
+            <h2>Drafts</h2>
             <div id="drafts-list">Loading...</div>
             <div id="history-preview-modal" style="display: none; margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; position: relative;">
                 <button id="close-preview" style="position: absolute; right: 1rem; top: 1rem;">Close</button>

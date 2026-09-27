@@ -2,6 +2,7 @@ import { liveRefresh } from '../../services/realtime.js';
 import { fetchSupportTickets, resolveSupportTicket } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
+import { formatStatus } from '../../shared/statusFormatter.js';
 
 export default class SupportTicketsHubView {
     async render() {
@@ -9,7 +10,7 @@ export default class SupportTicketsHubView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Support Tickets Hub</h2>
+            <h2>Support Tickets</h2>
             <div id="tickets-hub-list" style="margin-top: 1rem;">
                 <div class="skeleton skeleton-table-row"></div>
                 <div class="skeleton skeleton-table-row"></div>
@@ -42,7 +43,7 @@ export default class SupportTicketsHubView {
                                 <td>${escapeHTML(t.clientName)}</td>
                                 <td>${escapeHTML(t.subject)}</td>
                                 <td>${escapeHTML(t.priority)}</td>
-                                <td>${escapeHTML(t.status)}</td>
+                                <td>${escapeHTML(formatStatus(t.status))}</td>
                                 <td>
                                     ${t.status === 'OPEN' ? `<button class="resolve-btn btn-sm" data-id="${t.id}">Resolve</button>` : 'Resolved'}
                                 </td>

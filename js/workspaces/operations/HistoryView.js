@@ -12,7 +12,7 @@ export default class HistoryView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>My Form History</h2>
+            <h2>History</h2>
             <div id="history-list">Loading...</div>
             <div id="history-preview-modal" style="display: none; margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; position: relative;">
                 <button id="close-preview" style="position: absolute; right: 1rem; top: 1rem;">Close</button>

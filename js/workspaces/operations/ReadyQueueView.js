@@ -7,7 +7,7 @@ export default class ReadyQueueView {
         const container = document.createElement('div');
         container.className = 'card';
         
-        container.innerHTML = `<h2>All Installations</h2><div id="ready-list">Loading...</div><div id="preview-container"></div>`;
+        container.innerHTML = `<h2>My Installations</h2><div id="ready-list">Loading...</div><div id="preview-container"></div>`;
         
         const listDiv = container.querySelector('#ready-list');
         const previewDiv = container.querySelector('#preview-container');

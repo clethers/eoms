@@ -9,7 +9,7 @@ export default class AssignedQueueView {
         const container = document.createElement('div');
         container.className = 'card';
         
-        container.innerHTML = `<h2>Pending Inspections</h2><div id="assigned-list">Loading...</div>`;
+        container.innerHTML = `<h2>My Inspections</h2><div id="assigned-list">Loading...</div>`;
         
         const listDiv = container.querySelector('#assigned-list');
         

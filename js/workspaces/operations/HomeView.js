@@ -51,25 +51,25 @@ export default class HomeView {
                 <div style="display:flex; gap: 1.5rem; margin-top: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
                     <div class="home-stat" data-link-to="/ocular/assigned" style="cursor:pointer; background: var(--brand-blue-soft); padding: 1.5rem; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
                         <h3 style="font-size: 2rem; margin: 0; color: var(--brand-blue);">${assigned.length}</h3>
-                        <p style="margin: 0.5rem 0 0; color: var(--brand-blue);">Assigned Inspections</p>
+                        <p style="margin: 0.5rem 0 0; color: var(--brand-blue);">My Inspections</p>
                     </div>
                     <div class="home-stat" data-link-to="/ocular/ready" style="cursor:pointer; background: var(--brand-blue-soft); padding: 1.5rem; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
                         <h3 style="font-size: 2rem; margin: 0; color: var(--brand-blue);">${ready.length}</h3>
-                        <p style="margin: 0.5rem 0 0; color: var(--brand-blue);">Ready Installations</p>
+                        <p style="margin: 0.5rem 0 0; color: var(--brand-blue);">My Installations</p>
                     </div>
                     <div class="home-stat" data-link-to="/ocular/drafts" style="cursor:pointer; background:#fffbeb; padding: 1.5rem; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
                         <h3 style="font-size: 2rem; margin: 0; color: #92400e;">${draftCount}</h3>
-                        <p style="margin: 0.5rem 0 0; color: #d97706;">Saved Drafts</p>
+                        <p style="margin: 0.5rem 0 0; color: #d97706;">Drafts</p>
                     </div>
                     <div class="home-stat" data-link-to="/ocular/history" style="cursor:pointer; background:#fef2f2; padding: 1.5rem; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
                         <h3 style="font-size: 2rem; margin: 0; color: #991b1b;">${rejectedCount}</h3>
-                        <p style="margin: 0.5rem 0 0; color: #ef4444;">Rejected &ndash; Needs Resubmit</p>
+                        <p style="margin: 0.5rem 0 0; color: #ef4444;">Needs Revision</p>
                     </div>
                 </div>
 
                 <div style="display:flex; gap: 1rem; flex-wrap: wrap;">
-                    <button id="home-new-inspection-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem;">Start New Inspection</button>
-                    <button id="home-tickets-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem; background: #e2e8f0; color: #334155;">Help &amp; Support</button>
+                    <button id="home-new-inspection-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem;">New Inspection</button>
+                    <button id="home-tickets-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem; background: #e2e8f0; color: #334155;">Support Tickets</button>
                 </div>
             `;
 

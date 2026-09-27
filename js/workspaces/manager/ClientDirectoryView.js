@@ -9,7 +9,7 @@ export default class ClientDirectoryView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Client Directory</h2>
+            <h2>Inspection Records</h2>
             <div id="clients-table-container" style="margin-top: 1rem;">
                 <div class="skeleton skeleton-table-row"></div>
                 <div class="skeleton skeleton-table-row"></div>

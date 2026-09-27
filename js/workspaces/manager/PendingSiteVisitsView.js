@@ -10,7 +10,7 @@ export default class PendingSiteVisitsView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Pending Site Visits</h2>
+            <h2>Pending Inspections</h2>
             <div id="visits-list">Loading...</div>
         `;
 

@@ -10,7 +10,7 @@ export default class QAReviewQueueView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Inspection Approval</h2>
+            <h2>For Review</h2>
             <div id="qa-queue-container" style="margin-top: 1rem;">
                 <div class="skeleton skeleton-table-row"></div>
                 <div class="skeleton skeleton-table-row"></div>

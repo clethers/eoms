@@ -54,7 +54,7 @@ export default class InstallationFormView {
         }
 
         this.container.innerHTML = `
-            <h2>Installation Report Form ${this.step > 0 ? `- Step ${this.step} of 4` : ''}</h2>
+            <h2>New Installation ${this.step > 0 ? `- Step ${this.step} of 4` : ''}</h2>
             <form id="installation-form" style="display: flex; flex-direction: column; flex: 1;">
                 <div style="flex: 1; display: flex; flex-direction: column;">
                     ${content}

@@ -1,5 +1,6 @@
 import { getProfiles, createUser } from '../../services/userService.js';
 import { escapeHTML } from '../../shared/security.js';
+import { formatStatus } from '../../shared/statusFormatter.js';
 
 export default class UserManagementView {
     async render() {
@@ -7,7 +8,7 @@ export default class UserManagementView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>User Management</h2>
+            <h2>Users</h2>
             <div class="form-panel">
                 <h3>Add New User</h3>
                 <form id="add-user-form" class="form-row">
@@ -81,7 +82,7 @@ export default class UserManagementView {
                                 <td>${escapeHTML(p.fullName)}</td>
                                 <td>${escapeHTML(p.email)}</td>
                                 <td>${escapeHTML(p.role)}</td>
-                                <td><span style="background: ${p.status === 'ACTIVE' ? '#d1fae5' : '#fee2e2'}; color: ${p.status === 'ACTIVE' ? '#065f46' : '#991b1b'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(p.status)}</span></td>
+                                <td><span style="background: ${p.status === 'ACTIVE' ? '#d1fae5' : '#fee2e2'}; color: ${p.status === 'ACTIVE' ? '#065f46' : '#991b1b'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(p.status))}</span></td>
                                 <td>
                                     <button class="user-profile-btn btn-sm" data-id="${p.id}" title="Staff Profile" style="background-color: #6366f1; color: white;">Profile</button>
                                 </td>

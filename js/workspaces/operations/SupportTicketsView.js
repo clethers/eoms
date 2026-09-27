@@ -1,6 +1,7 @@
 import { fetchSupportTickets, createSupportTicket, fetchMySubmittedInspections } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
+import { formatStatus } from '../../shared/statusFormatter.js';
 
 export default class SupportTicketsView {
     async render() {
@@ -114,7 +115,7 @@ export default class SupportTicketsView {
                                 <td>${new Date(t.createdAt).toLocaleString()}</td>
                                 <td>${escapeHTML(t.subject)}</td>
                                 <td>${escapeHTML(t.priority)}</td>
-                                <td>${escapeHTML(t.status)}</td>
+                                <td>${escapeHTML(formatStatus(t.status))}</td>
                             </tr>
                         `).join('')}
                     </tbody>

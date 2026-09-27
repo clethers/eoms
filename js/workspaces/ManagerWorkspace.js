@@ -6,9 +6,15 @@ import InstallationsRegisterView from './manager/InstallationsRegisterView.js';
 import SupportTicketsHubView from './manager/SupportTicketsHubView.js';
 import CalendarView from './manager/CalendarView.js';
 import AnalyticsDashboardView from './manager/AnalyticsDashboardView.js';
+import { getActiveProfile } from '../components/ActiveProfilePicker.js';
 
 export default class ManagerWorkspace {
     async render(path) {
+        // Customer Care lands on Customers; other roles keep For Review as the /manager default.
+        if (path === '/manager' && getActiveProfile()?.role === 'customer_care_manager') {
+            path = '/manager/pipeline';
+            history.replaceState(null, null, path);
+        }
         const container = document.createElement('div');
         container.className = 'workspace-layout';
         
@@ -16,18 +22,18 @@ export default class ManagerWorkspace {
             <aside class="sidebar">
                 <nav class="sidebar-nav">
                     <div class="sidebar-category">Operations & Review</div>
-                    <a href="/manager/qa" class="${path === '/manager/qa' || path === '/manager' ? 'active' : ''}" data-link>Inspection Approval</a>
-                    <a href="/manager/pendingvisits" class="${path === '/manager/pendingvisits' ? 'active' : ''}" data-link>Pending Visits</a>
-                    <a href="/manager/calendar" class="${path === '/manager/calendar' ? 'active' : ''}" data-link>Dispatch Calendar</a>
+                    <a href="/manager/qa" class="${path === '/manager/qa' || path === '/manager' ? 'active' : ''}" data-link>For Review</a>
+                    <a href="/manager/pendingvisits" class="${path === '/manager/pendingvisits' ? 'active' : ''}" data-link>Pending Inspections</a>
+                    <a href="/manager/calendar" class="${path === '/manager/calendar' ? 'active' : ''}" data-link>Calendar</a>
                     
                     <div class="sidebar-category">CRM & Business</div>
-                    <a href="/manager/analytics" class="${path === '/manager/analytics' ? 'active' : ''}" data-link>Analytics Dashboard</a>
-                    <a href="/manager/pipeline" class="${path === '/manager/pipeline' ? 'active' : ''}" data-link>Sales Pipeline</a>
-                    <a href="/manager/clientsearch" class="${path === '/manager/clientsearch' ? 'active' : ''}" data-link>Client Directory</a>
+                    <a href="/manager/analytics" class="${path === '/manager/analytics' ? 'active' : ''}" data-link>Reports</a>
+                    <a href="/manager/pipeline" class="${path === '/manager/pipeline' ? 'active' : ''}" data-link>Customers</a>
+                    <a href="/manager/clientsearch" class="${path === '/manager/clientsearch' ? 'active' : ''}" data-link>Inspection Records</a>
                     
                     <div class="sidebar-category">Fulfillment & Support</div>
                     <a href="/manager/installations" class="${path === '/manager/installations' ? 'active' : ''}" data-link>Installations</a>
-                    <a href="/manager/tickets" class="${path === '/manager/tickets' ? 'active' : ''}" data-link>Help Desk</a>
+                    <a href="/manager/tickets" class="${path === '/manager/tickets' ? 'active' : ''}" data-link>Support Tickets</a>
                 </nav>
             </aside>
             <main class="main-view" id="manager-main">
