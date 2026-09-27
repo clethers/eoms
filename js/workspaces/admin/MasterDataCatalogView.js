@@ -8,10 +8,10 @@ export default class MasterDataCatalogView {
         
         container.innerHTML = `
             <h2>Inventory Database</h2>
-            <div style="margin-top: 1rem; margin-bottom: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px;">
+            <div class="form-panel">
                 <h3>Add New Inventory Item</h3>
-                <form id="add-catalog-form" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
-                    <div class="form-group" style="margin: 0;">
+                <form id="add-catalog-form" class="form-row">
+                    <div class="form-group">
                         <label>Category</label>
                         <select name="category" required>
                             <option value="chargers">Chargers</option>
@@ -20,23 +20,23 @@ export default class MasterDataCatalogView {
                             <option value="scopes">Scopes</option>
                         </select>
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Item Key (unique)</label>
                         <input type="text" name="itemKey" required placeholder="e.g. c-22kw">
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Item Name</label>
                         <input type="text" name="itemName" required>
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Stock</label>
                         <input type="number" name="currentStock" min="0" placeholder="Optional">
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Unit Price</label>
                         <input type="number" name="unitPrice" min="0" placeholder="Optional">
                     </div>
-                    <button type="submit" style="padding: 0.5rem 1rem;">Add Item</button>
+                    <button type="submit">Add Item</button>
                 </form>
             </div>
             <div id="catalog-table-container">
@@ -95,8 +95,10 @@ export default class MasterDataCatalogView {
                                 <td>${c.currentStock !== null && c.currentStock !== undefined ? escapeHTML(c.currentStock) : '-'}</td>
                                 <td>${c.unitPrice !== null && c.unitPrice !== undefined ? escapeHTML(c.unitPrice.toLocaleString()) : '-'}</td>
                                 <td>
-                                    <button class="edit-btn" data-key="${escapeHTML(c.itemKey)}" title="Edit" style="background-color: #f59e0b; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; margin-right: 0.5rem;">Edit</button>
-                                    <button class="delete-btn" data-key="${escapeHTML(c.itemKey)}" title="Delete" style="background-color: #ef4444; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Delete</button>
+                                    <div class="table-actions">
+                                    <button class="edit-btn btn-sm" data-key="${escapeHTML(c.itemKey)}" title="Edit" style="background-color: #f59e0b; color: white;">Edit</button>
+                                    <button class="delete-btn btn-sm" data-key="${escapeHTML(c.itemKey)}" title="Delete" style="background-color: #ef4444; color: white;">Delete</button>
+                                    </div>
                                 </td>
                             </tr>
                         `).join('')}
@@ -142,7 +144,7 @@ export default class MasterDataCatalogView {
                                     <input type="number" step="0.01" id="edit-price" value="${item.unitPrice !== null ? item.unitPrice : ''}">
                                 </div>
                             </div>
-                            <div style="display:flex; justify-content:flex-end; gap: 1rem; margin-top: 1.5rem;">
+                            <div class="modal-actions">
                                 <button id="edit-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
                                 <button id="edit-save" style="background: #10b981; color: white;">Save Changes</button>
                             </div>

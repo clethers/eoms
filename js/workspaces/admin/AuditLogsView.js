@@ -7,11 +7,11 @@ export default class AuditLogsView {
         container.className = 'card';
         
         container.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="page-header">
                 <h2>Audit Logs</h2>
                 <button id="export-csv-btn">Export CSV</button>
             </div>
-            <div style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
+            <div class="toolbar">
                 <input type="text" id="filter-actor" placeholder="Filter by Actor Email">
                 <select id="filter-category">
                     <option value="">All Categories</option>

@@ -57,8 +57,8 @@ export default class AssignedQueueView {
                                     <td style="padding: 0.5rem; font-weight: bold;">${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : 'Not Scheduled')}</td>
                                     <td style="padding: 0.5rem;">
                                         ${isLocked 
-                                            ? `<button disabled title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px;">Locked</button>`
-                                            : `<button class="start-inspection-btn" data-id="${i.id}" data-rn="${escapeHTML(i.rnNo)}" title="Start Inspection" style="font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; background-color: var(--brand-green); color: white;">Start</button>`
+                                            ? `<button disabled class="btn-sm" title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed;">Locked</button>`
+                                            : `<button class="start-inspection-btn btn-sm" data-id="${i.id}" data-rn="${escapeHTML(i.rnNo)}" title="Start Inspection" style="background-color: var(--brand-green); color: white;">Start</button>`
                                         }
                                     </td>
                                 </tr>

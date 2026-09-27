@@ -27,7 +27,7 @@ export default class QAReviewQueueView {
         
         previewModal.innerHTML = `
             <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90vw; max-height: 90vh; overflow-y: auto; margin: 5vh auto; position: relative;">
-                <button type="button" id="close-preview" style="position: absolute; top: 1rem; right: 1rem; background: #e2e8f0; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Close</button>
+                <button type="button" id="close-preview" style="position: absolute; top: 1rem; right: 1rem; background: #e2e8f0; height: var(--control-h);">Close</button>
                 <div id="preview-content"></div>
             </div>
         `;
@@ -59,9 +59,11 @@ export default class QAReviewQueueView {
                                 <td>${escapeHTML(i.rnNo || 'Draft')}</td>
                                 <td>${escapeHTML(i.clientName || 'N/A')}</td>
                                 <td>
-                                    <button class="qa-action-btn" data-id="${i.id}" data-action="preview">View Summary</button>
-                                    <button class="qa-action-btn" data-id="${i.id}" data-action="approve" style="background: #10b981; color: white;">Approve</button>
-                                    <button class="qa-action-btn" data-id="${i.id}" data-action="reject" style="background: #ef4444; color: white;">Reject</button>
+                                    <div class="table-actions">
+                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="preview">View Summary</button>
+                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="approve" style="background: #10b981; color: white;">Approve</button>
+                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="reject" style="background: #ef4444; color: white;">Reject</button>
+                                    </div>
                                 </td>
                             </tr>
                         `).join('')}

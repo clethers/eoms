@@ -42,7 +42,7 @@ export default class InstallationsRegisterView {
                                 <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>${escapeHTML(i.status)}</td>
                                 <td>
-                                    <button class="print-btn" data-id="${i.id}">Print Register</button>
+                                    <button class="print-btn btn-sm" data-id="${i.id}">Print Register</button>
                                 </td>
                             </tr>
                         `).join('')}

@@ -44,7 +44,7 @@ export default class SupportTicketsHubView {
                                 <td>${escapeHTML(t.priority)}</td>
                                 <td>${escapeHTML(t.status)}</td>
                                 <td>
-                                    ${t.status === 'OPEN' ? `<button class="resolve-btn" data-id="${t.id}" style="background-color: #10b981; color: white;">Resolve</button>` : 'Resolved'}
+                                    ${t.status === 'OPEN' ? `<button class="resolve-btn btn-sm" data-id="${t.id}" style="background-color: #10b981; color: white;">Resolve</button>` : 'Resolved'}
                                 </td>
                             </tr>
                         `).join('')}

@@ -43,27 +43,29 @@ export default class SalesPipelineView {
         
         container.innerHTML = `
             <h2>Sales Pipeline</h2>
-            <div style="margin-top: 1rem; margin-bottom: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px;">
+            <div class="form-panel">
                 <h3>Add New Lead</h3>
-                <form id="add-lead-form" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
-                    <div class="form-group" style="margin: 0;">
+                <form id="add-lead-form" class="form-row">
+                    <div class="form-group">
                         <label>Name</label>
                         <input type="text" name="name" required>
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Email</label>
                         <input type="email" name="email">
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Phone</label>
                         <input type="tel" name="phone">
                     </div>
-                    <div class="form-group" style="margin: 0;">
-                        <label>Installation Address</label>
-                        <input type="text" name="installationAddress" required>
+                    <div class="form-row-end">
+                        <div class="form-group">
+                            <label>Installation Address</label>
+                            <input type="text" name="installationAddress" required>
+                        </div>
+                        <button type="submit">Add Lead</button>
+                        <button type="button" id="bulk-import-btn" style="background-color: #64748b; color: white;">Bulk Import (Mock)</button>
                     </div>
-                    <button type="submit" style="padding: 0.5rem 1rem;">Add Lead</button>
-                    <button type="button" id="bulk-import-btn" style="padding: 0.5rem 1rem; background-color: #64748b; color: white;">Bulk Import (Mock)</button>
                 </form>
             </div>
             <div id="pipeline-table-container">
@@ -161,11 +163,13 @@ export default class SalesPipelineView {
                                         : `<span style="background: #fef3c7; color: #92400e; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">Pending</span>`}
                                 </td>
                                 <td>
-                                    <button class="profile-btn" data-id="${l.id}" title="View CRM Profile" style="background-color: #6366f1; color: white; margin-right: 0.5rem; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Profile</button>
-                                    ${l.ocularId ? `<button class="view-reports-btn" data-id="${l.id}" title="View Project Reports" style="background-color: #f59e0b; color: white; margin-right: 0.5rem; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Reports</button>` : ''}
-                                    ${!l.ocularId ? `<button class="dispatch-btn" data-id="${l.id}" title="Dispatch Ocular" style="background-color: var(--brand-green); color: white; margin-right: 0.5rem; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Dispatch</button>` : ''}
-                                    ${l.stage === 'SITE_VISIT_COMPLETED' ? `<button class="quote-btn" data-id="${l.id}" title="Generate Quote" style="background-color: #8b5cf6; color: white; margin-right: 0.5rem; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Quote</button>` : ''}
-                                    ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn" data-id="${l.id}" title="Dispatch Install" style="background-color: #10b981; color: white; margin-right: 0.5rem; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Install</button>` : ''}
+                                    <div class="table-actions">
+                                    <button class="profile-btn btn-sm" data-id="${l.id}" title="View CRM Profile" style="background-color: #6366f1; color: white;">Profile</button>
+                                    ${l.ocularId ? `<button class="view-reports-btn btn-sm" data-id="${l.id}" title="View Project Reports" style="background-color: #f59e0b; color: white;">Reports</button>` : ''}
+                                    ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Ocular" style="background-color: var(--brand-green); color: white;">Dispatch</button>` : ''}
+                                    ${l.stage === 'SITE_VISIT_COMPLETED' ? `<button class="quote-btn btn-sm" data-id="${l.id}" title="Generate Quote" style="background-color: #8b5cf6; color: white;">Quote</button>` : ''}
+                                    ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn btn-sm" data-id="${l.id}" title="Dispatch Install" style="background-color: #10b981; color: white;">Install</button>` : ''}
+                                    </div>
                                 </td>
                             </tr>
                         `).join('')}
@@ -177,9 +181,9 @@ export default class SalesPipelineView {
             <!-- View Reports Modal -->
             <div id="reports-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
                 <div class="print-modal-content" style="background: white; padding: 2rem; border-radius: 8px; width: 900px; max-width: 95vw; max-height: 90vh; overflow-y: auto; position: relative;">
-                    <div class="print-hide" style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem;">
-                        <button type="button" id="print-reports-btn" style="background: var(--brand-green); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Print / PDF</button>
-                        <button type="button" id="close-reports-btn" style="background: #e2e8f0; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Close</button>
+                    <div class="print-hide toolbar" style="position: absolute; top: 1rem; right: 1rem; gap: 0.5rem;">
+                        <button type="button" id="print-reports-btn" style="background: var(--brand-green); color: white;">Print / PDF</button>
+                        <button type="button" id="close-reports-btn" style="background: #e2e8f0;">Close</button>
                     </div>
                     <h2 style="margin-top: 0;">Project Reports</h2>
                     <div style="display: flex; gap: 2rem; margin-top: 1rem;">
@@ -350,7 +354,7 @@ export default class SalesPipelineView {
                                 <input type="number" id="quote-total" readonly style="background: #f3f4f6; font-weight: bold; font-size: 1.2rem; color: #059669;">
                             </div>
                             
-                            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                            <div class="modal-actions">
                                 <button id="quote-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
                                 <button id="quote-confirm" style="background: #8b5cf6; color: white;">Save & Send Quote</button>
                             </div>
@@ -420,12 +424,12 @@ export default class SalesPipelineView {
                     
                     modal.innerHTML = `
                         <div style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                                <h3 style="margin: 0;">CRM Profile: ${escapeHTML(lead.name)}</h3>
+                            <div class="page-header" style="margin-bottom: 1.5rem;">
+                                <h3>CRM Profile: ${escapeHTML(lead.name)}</h3>
                                 <span style="background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(lead.stage))}</span>
                             </div>
                             
-                            <form id="crm-profile-form">
+                            <form id="crm-profile-form" class="form-stack">
                                 <div class="form-group">
                                     <label>Client / Company Name</label>
                                     <input type="text" name="name" value="${escapeHTML(lead.name)}" required>
@@ -442,8 +446,8 @@ export default class SalesPipelineView {
                                     <label>Installation Address</label>
                                     <input type="text" name="installationAddress" value="${escapeHTML(lead.installationAddress)}" required>
                                 </div>
-                                <div style="display: flex; gap: 1rem;">
-                                    <div class="form-group" style="flex: 1;">
+                                <div class="form-row">
+                                    <div class="form-group">
                                         <label>Mode of Communication</label>
                                         <select name="modeOfCommunication">
                                             <option value="Phone" ${lead.modeOfCommunication === 'Phone' ? 'selected' : ''}>Phone</option>
@@ -452,7 +456,7 @@ export default class SalesPipelineView {
                                             <option value="In-Person" ${lead.modeOfCommunication === 'In-Person' ? 'selected' : ''}>In-Person</option>
                                         </select>
                                     </div>
-                                    <div class="form-group" style="flex: 1;">
+                                    <div class="form-group">
                                         <label>Building Type</label>
                                         <select name="buildingType">
                                             <option value="">-- Select --</option>
@@ -467,9 +471,9 @@ export default class SalesPipelineView {
                                     <textarea name="remarks" rows="4" placeholder="Add internal notes here...">${escapeHTML(lead.remarks || '')}</textarea>
                                 </div>
                                 
-                                <div style="display:flex; justify-content:space-between; align-items: center; margin-top: 1.5rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                                <div class="modal-actions modal-actions--split" style="margin-top: 0.5rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
                                     <button type="button" id="crm-archive-btn" style="background: #ef4444; color: white;">Archive Lead</button>
-                                    <div style="display: flex; gap: 1rem;">
+                                    <div>
                                         <button type="button" id="crm-close-btn" style="background: #e2e8f0; color: #333;">Close</button>
                                         <button type="submit" style="background: var(--brand-green); color: white;">Save Changes</button>
                                     </div>
@@ -547,7 +551,7 @@ export default class SalesPipelineView {
                                 <label>Scheduled Date & Time</label>
                                 <input type="datetime-local" id="dispatch-date" required>
                             </div>
-                            <div style="display:flex; justify-content:flex-end; gap: 1rem; margin-top: 1.5rem;">
+                            <div class="modal-actions">
                                 <button id="dispatch-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
                                 <button id="dispatch-confirm" style="background: var(--brand-green); color: white;">Dispatch</button>
                             </div>
@@ -609,7 +613,7 @@ export default class SalesPipelineView {
                                 <label>Scheduled Date & Time</label>
                                 <input type="datetime-local" id="dispatch-install-date" required>
                             </div>
-                            <div style="display:flex; justify-content:flex-end; gap: 1rem; margin-top: 1.5rem;">
+                            <div class="modal-actions">
                                 <button id="dispatch-install-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
                                 <button id="dispatch-install-confirm" style="background: #10b981; color: white;">Dispatch</button>
                             </div>

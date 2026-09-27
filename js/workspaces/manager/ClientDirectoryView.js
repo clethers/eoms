@@ -42,7 +42,7 @@ export default class ClientDirectoryView {
                                 <td>${escapeHTML(i.locationAddress || 'N/A')}</td>
                                 <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>
-                                    <button class="print-btn" data-id="${i.id}">Print Certificate</button>
+                                    <button class="print-btn btn-sm" data-id="${i.id}">Print Certificate</button>
                                 </td>
                             </tr>
                         `).join('')}

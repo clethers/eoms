@@ -9,21 +9,21 @@ export default class SupportTicketsView {
         
         container.innerHTML = `
             <h2>Support Tickets</h2>
-            <div style="margin-top: 1rem; margin-bottom: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px;">
+            <div class="form-panel">
                 <h3>File New Ticket</h3>
-                <form id="file-ticket-form" style="display: flex; gap: 1rem; flex-direction: column;">
-                    <div style="display: flex; gap: 1rem;">
-                        <div class="form-group" style="flex: 1;">
+                <form id="file-ticket-form" class="form-stack">
+                    <div class="form-row">
+                        <div class="form-group">
                             <label>Client Name</label>
                             <input type="text" name="clientName" required>
                         </div>
-                        <div class="form-group" style="flex: 1;">
+                        <div class="form-group">
                             <label>Related Ocular (Optional)</label>
                             <select name="ocularId" id="ticket-ocular-select">
                                 <option value="">None</option>
                             </select>
                         </div>
-                        <div class="form-group" style="flex: 1;">
+                        <div class="form-group">
                             <label>Priority</label>
                             <select name="priority" required>
                                 <option value="NORMAL">Normal</option>
@@ -41,7 +41,7 @@ export default class SupportTicketsView {
                         <textarea name="description" rows="3" required></textarea>
                     </div>
                     <div>
-                        <button type="submit" style="padding: 0.5rem 1rem;">Submit Ticket</button>
+                        <button type="submit" style="height: var(--control-h);">Submit Ticket</button>
                     </div>
                 </form>
             </div>

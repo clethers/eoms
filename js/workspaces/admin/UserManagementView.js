@@ -8,22 +8,22 @@ export default class UserManagementView {
         
         container.innerHTML = `
             <h2>User Management</h2>
-            <div style="margin-top: 1rem; margin-bottom: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px;">
+            <div class="form-panel">
                 <h3>Add New User</h3>
-                <form id="add-user-form" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
-                    <div class="form-group" style="margin: 0;">
+                <form id="add-user-form" class="form-row">
+                    <div class="form-group">
                         <label>Full Name</label>
                         <input type="text" name="fullName" required>
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Email</label>
                         <input type="email" name="email" required>
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Phone Number</label>
                         <input type="tel" name="phone">
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group">
                         <label>Role</label>
                         <select name="role" required>
                             <option value="operations">Operations</option>
@@ -32,7 +32,7 @@ export default class UserManagementView {
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <button type="submit" style="padding: 0.5rem 1rem;">Add User</button>
+                    <button type="submit">Add User</button>
                 </form>
             </div>
             <div id="users-table-container">
@@ -83,7 +83,7 @@ export default class UserManagementView {
                                 <td>${escapeHTML(p.role)}</td>
                                 <td><span style="background: ${p.status === 'ACTIVE' ? '#d1fae5' : '#fee2e2'}; color: ${p.status === 'ACTIVE' ? '#065f46' : '#991b1b'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(p.status)}</span></td>
                                 <td>
-                                    <button class="user-profile-btn" data-id="${p.id}" title="Staff Profile" style="background-color: #6366f1; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Profile</button>
+                                    <button class="user-profile-btn btn-sm" data-id="${p.id}" title="Staff Profile" style="background-color: #6366f1; color: white;">Profile</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -107,7 +107,7 @@ export default class UserManagementView {
                     modal.innerHTML = `
                         <div style="background: white; padding: 2rem; border-radius: 8px; width: 400px; max-width: 90vw;">
                             <h3 style="margin-top: 0;">Staff Profile: ${escapeHTML(profile.fullName)}</h3>
-                            <form id="staff-profile-form">
+                            <form id="staff-profile-form" class="form-stack">
                                 <div class="form-group">
                                     <label>Email Address</label>
                                     <input type="email" name="email" value="${escapeHTML(profile.email)}" required>
@@ -116,8 +116,8 @@ export default class UserManagementView {
                                     <label>Phone Number</label>
                                     <input type="text" name="phone" value="${escapeHTML(profile.phone || '')}" placeholder="+63 912 345 6789">
                                 </div>
-                                <div style="display: flex; gap: 1rem;">
-                                    <div class="form-group" style="flex: 1;">
+                                <div class="form-row">
+                                    <div class="form-group">
                                         <label>Role</label>
                                         <select name="role">
                                             <option value="operations" ${profile.role === 'operations' ? 'selected' : ''}>Operations</option>
@@ -126,7 +126,7 @@ export default class UserManagementView {
                                             <option value="admin" ${profile.role === 'admin' ? 'selected' : ''}>Admin</option>
                                         </select>
                                     </div>
-                                    <div class="form-group" style="flex: 1;">
+                                    <div class="form-group">
                                         <label>Status</label>
                                         <select name="status">
                                             <option value="ACTIVE" ${profile.status === 'ACTIVE' ? 'selected' : ''}>Active</option>
@@ -138,7 +138,7 @@ export default class UserManagementView {
                                     <label>Department</label>
                                     <input type="text" name="department" value="${escapeHTML(profile.department || '')}">
                                 </div>
-                                <div style="display:flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                                <div class="modal-actions">
                                     <button type="button" id="staff-close-btn" style="background: #e2e8f0; color: #333;">Close</button>
                                     <button type="submit" style="background: var(--brand-green); color: white;">Save Changes</button>
                                 </div>
