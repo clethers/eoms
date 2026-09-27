@@ -19,14 +19,14 @@ export async function router() {
     // Default route logic
     if (path === '/' || path === '') {
         const activeId = getActiveProfileId();
-        let defaultPath = '/ocular';
+        let defaultPath = '/ocular/home';
         
         if (activeId) {
             const profiles = await getProfiles();
             const profile = profiles.find(p => p.id === activeId);
             if (profile) {
                 if (profile.role === 'admin') defaultPath = '/admin';
-                else if (profile.role === 'field_inspector') defaultPath = '/ocular';
+                else if (profile.role === 'field_inspector') defaultPath = '/ocular/home';
                 else defaultPath = '/manager';
             }
         }
@@ -36,7 +36,7 @@ export async function router() {
     }
     
     // Update workspace switcher
-    renderWorkspaceSwitcher('workspace-switcher-container', path);
+    await renderWorkspaceSwitcher('workspace-switcher-container', path);
     
     const match = routes.find(r => path.startsWith(r.prefix));
     const container = document.getElementById('app-content');

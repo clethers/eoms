@@ -95,8 +95,8 @@ export default class MasterDataCatalogView {
                                 <td>${c.currentStock !== null && c.currentStock !== undefined ? escapeHTML(c.currentStock) : '-'}</td>
                                 <td>${c.unitPrice !== null && c.unitPrice !== undefined ? escapeHTML(c.unitPrice.toLocaleString()) : '-'}</td>
                                 <td>
-                                    <button class="edit-btn" data-key="${escapeHTML(c.itemKey)}" title="Edit" style="background-color: #f59e0b; color: white; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; margin-right: 0.5rem;">✏️</button>
-                                    <button class="delete-btn" data-key="${escapeHTML(c.itemKey)}" title="Delete" style="background-color: #ef4444; color: white; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">🗑️</button>
+                                    <button class="edit-btn" data-key="${escapeHTML(c.itemKey)}" title="Edit" style="background-color: #f59e0b; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; margin-right: 0.5rem;">Edit</button>
+                                    <button class="delete-btn" data-key="${escapeHTML(c.itemKey)}" title="Delete" style="background-color: #ef4444; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Delete</button>
                                 </td>
                             </tr>
                         `).join('')}

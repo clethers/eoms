@@ -41,10 +41,10 @@ export default class ReadyQueueView {
                                     <td>${escapeHTML(i.clientName)}</td>
                                     <td>${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : 'Not Scheduled')}</td>
                                     <td>
-                                        <button data-action="preview" data-id="${i.id}" data-ocular="${i.ocularId}" title="View Ocular Summary" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">👁️</button>
-                                        ${isLocked 
-                                            ? `<button disabled title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; margin-left: 0.5rem;">🔒</button>` 
-                                            : `<button data-action="start" data-id="${i.id}" title="Start Install" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; background-color: var(--brand-green); color: white; margin-left: 0.5rem;">🛠️</button>`
+                                        <button data-action="preview" data-id="${i.id}" data-ocular="${i.ocularId}" title="View Ocular Summary" style="font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">View</button>
+                                        ${isLocked
+                                            ? `<button disabled title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; margin-left: 0.5rem;">Locked</button>`
+                                            : `<button data-action="start" data-id="${i.id}" title="Start Install" style="font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; background-color: var(--brand-green); color: white; margin-left: 0.5rem;">Install</button>`
                                         }
                                     </td>
                                 </tr>

@@ -1,3 +1,4 @@
+import HomeView from './operations/HomeView.js';
 import OcularFormView from './operations/OcularFormView.js';
 import AssignedQueueView from './operations/AssignedQueueView.js';
 import ReadyQueueView from './operations/ReadyQueueView.js';
@@ -14,6 +15,9 @@ export default class OperationsWorkspace {
         container.innerHTML = `
             <aside class="sidebar">
                 <nav class="sidebar-nav">
+                    <div class="sidebar-category">Overview</div>
+                    <a href="/ocular/home" class="${path === '/ocular/home' ? 'active' : ''}" data-link>Home</a>
+
                     <div class="sidebar-category">Field Work</div>
                     <a href="/ocular" class="${path === '/ocular' ? 'active' : ''}" data-link>Site Inspection</a>
                     <a href="/ocular/assigned" class="${path === '/ocular/assigned' ? 'active' : ''}" data-link>Pending Inspection</a>
@@ -36,7 +40,8 @@ export default class OperationsWorkspace {
         const main = container.querySelector('#operations-main');
         
         let view;
-        if (path === '/ocular') view = new OcularFormView();
+        if (path === '/ocular/home') view = new HomeView();
+        else if (path === '/ocular') view = new OcularFormView();
         else if (path === '/ocular/assigned') view = new AssignedQueueView();
         else if (path === '/ocular/ready') view = new ReadyQueueView();
         else if (path === '/ocular/installation') view = new InstallationFormView();

@@ -44,8 +44,8 @@ export default class HistoryView {
                                     <td>${escapeHTML(i.dateTime || 'N/A')}</td>
                                     <td><span style="padding: 0.2rem 0.5rem; background: #e2e8f0; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(i.status || 'DRAFT'))}</span></td>
                                     <td>
-                                        <button data-action="preview" data-id="${i.id}" title="View Summary" style="font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">👁️</button>
-                                        ${(i.status === 'DRAFT' || i.status === 'REJECTED') ? `<button data-action="edit" data-id="${i.id}" title="Edit" style="margin-left: 0.5rem; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; background: var(--brand-green); color: white;">✏️</button>` : ''}
+                                        <button data-action="preview" data-id="${i.id}" title="View Summary" style="font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">View</button>
+                                        ${(i.status === 'DRAFT' || i.status === 'REJECTED') ? `<button data-action="edit" data-id="${i.id}" title="Edit" style="margin-left: 0.5rem; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; background: var(--brand-green); color: white;">Edit</button>` : ''}
                                     </td>
                                 </tr>
                             `).join('')}

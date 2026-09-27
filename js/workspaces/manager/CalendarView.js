@@ -95,14 +95,14 @@ export default class CalendarView {
             dayOculars.forEach(o => {
                 html += `
                     <div class="calendar-event" data-type="ocular" data-id="${o.id}" style="cursor: pointer; background: #dbeafe; border-left: 3px solid #3b82f6; padding: 0.25rem 0.5rem; margin-bottom: 0.25rem; font-size: 0.75rem; border-radius: 2px; color: #1e3a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Ocular: ${escapeHTML(o.clientName)}">
-                        🚐 ${escapeHTML(o.clientName)}
+                        <strong>Ocular:</strong> ${escapeHTML(o.clientName)}
                     </div>`;
             });
             
             dayInstalls.forEach(ins => {
                 html += `
                     <div class="calendar-event" data-type="install" data-id="${ins.id}" style="cursor: pointer; background: #d1fae5; border-left: 3px solid #10b981; padding: 0.25rem 0.5rem; margin-bottom: 0.25rem; font-size: 0.75rem; border-radius: 2px; color: #064e3b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Install: ${escapeHTML(ins.clientName)}">
-                        🛠️ ${escapeHTML(ins.clientName)}
+                        <strong>Install:</strong> ${escapeHTML(ins.clientName)}
                     </div>`;
             });
 
@@ -143,7 +143,7 @@ export default class CalendarView {
         modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
         modal.style.zIndex = '2000';
         
-        const title = type === 'ocular' ? '🚐 Ocular Inspection Details' : '🛠️ Installation Details';
+        const title = type === 'ocular' ? 'Ocular Inspection Details' : 'Installation Details';
         const refNo = type === 'ocular' ? event.rnNo : event.installationNo;
         const addr = type === 'ocular' ? event.locationAddress : event.installationAddress;
         

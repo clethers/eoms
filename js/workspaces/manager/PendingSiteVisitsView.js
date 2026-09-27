@@ -49,7 +49,7 @@ export default class PendingSiteVisitsView {
                                 <td>${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : (i.dateTime || 'N/A'))}</td>
                                 <td><span style="padding: 0.2rem 0.5rem; background: #e2e8f0; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(i.status))}</span></td>
                                 <td>
-                                    ${showUnlock ? `<button class="unlock-btn" data-id="${i.id}" title="Unlock Early" style="font-size: 1.2rem; background: #f59e0b; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">🔓</button>` : ''}
+                                    ${showUnlock ? `<button class="unlock-btn" data-id="${i.id}" title="Unlock Early" style="font-size: 0.85rem; background: #f59e0b; color: white; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Unlock</button>` : ''}
                                 </td>
                             </tr>
                             `;

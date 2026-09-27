@@ -21,7 +21,7 @@ export async function renderNotificationCenter(containerId) {
 
         container.innerHTML = `
             <div id="bell-icon" style="font-size: 1.5rem; position: relative; color: white;">
-                &#x1F514;
+                &#x1F514;&#xFE0E;
                 ${unreadCount > 0 ? `<span style="position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; font-size: 0.75rem; padding: 2px 6px;">${unreadCount}</span>` : ''}
             </div>
             <div id="notif-dropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; width: 300px; max-height: 400px; overflow-y: auto; z-index: 2000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #333;">

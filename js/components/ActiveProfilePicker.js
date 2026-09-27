@@ -39,7 +39,7 @@ export async function renderProfilePicker(containerId) {
         const profile = profiles.find(p => p.id.toString() === newId);
         if (profile) {
             if (profile.role === 'admin') navigateTo('/admin');
-            else if (profile.role === 'field_inspector') navigateTo('/ocular');
+            else if (profile.role === 'field_inspector') navigateTo('/ocular/home');
             else navigateTo('/manager');
         }
     });

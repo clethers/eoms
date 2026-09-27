@@ -83,7 +83,7 @@ export default class UserManagementView {
                                 <td>${escapeHTML(p.role)}</td>
                                 <td><span style="background: ${p.status === 'ACTIVE' ? '#d1fae5' : '#fee2e2'}; color: ${p.status === 'ACTIVE' ? '#065f46' : '#991b1b'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(p.status)}</span></td>
                                 <td>
-                                    <button class="user-profile-btn" data-id="${p.id}" title="Staff Profile" style="background-color: #6366f1; color: white; font-size: 1.2rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">👤</button>
+                                    <button class="user-profile-btn" data-id="${p.id}" title="Staff Profile" style="background-color: #6366f1; color: white; font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Profile</button>
                                 </td>
                             </tr>
                         `).join('')}
