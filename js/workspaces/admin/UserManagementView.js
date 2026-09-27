@@ -26,7 +26,7 @@ export default class UserManagementView {
                     <div class="form-group" style="margin: 0;">
                         <label>Role</label>
                         <select name="role" required>
-                            <option value="field_inspector">Field Inspector</option>
+                            <option value="operations">Operations</option>
                             <option value="customer_care_manager">Manager</option>
                             <option value="lead_engineer">Lead Engineer</option>
                             <option value="admin">Admin</option>
@@ -120,7 +120,7 @@ export default class UserManagementView {
                                     <div class="form-group" style="flex: 1;">
                                         <label>Role</label>
                                         <select name="role">
-                                            <option value="field_inspector" ${profile.role === 'field_inspector' ? 'selected' : ''}>Field Inspector</option>
+                                            <option value="operations" ${profile.role === 'operations' ? 'selected' : ''}>Operations</option>
                                             <option value="customer_care_manager" ${profile.role === 'customer_care_manager' ? 'selected' : ''}>Manager</option>
                                             <option value="lead_engineer" ${profile.role === 'lead_engineer' ? 'selected' : ''}>Lead Engineer</option>
                                             <option value="admin" ${profile.role === 'admin' ? 'selected' : ''}>Admin</option>

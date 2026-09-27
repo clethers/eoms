@@ -9,7 +9,7 @@
 --   3. For EACH person, copy the block below, replace the three placeholders
 --        <email>      exact email used in step 2 (lowercase)
 --        <Full Name>  their display name
---        <role>       one of: admin | customer_care_manager | lead_engineer | field_inspector
+--        <role>       one of: admin | customer_care_manager | lead_engineer | operations
 --      and optionally change 'Operations' to their department.
 --   4. Run it in the SQL Editor. It is safe to re-run (updates the existing profile).
 --   5. Check: select id, email, full_name, role, status, auth_user_id from public.profiles;
@@ -35,8 +35,8 @@ on conflict (email) do update
 
 -- Example (delete or edit):
 -- insert into public.profiles (auth_user_id, email, full_name, role, status, data)
--- select id, email, 'Juan Dela Cruz', 'field_inspector', 'ACTIVE',
---        jsonb_build_object('email', email, 'fullName', 'Juan Dela Cruz', 'role', 'field_inspector',
+-- select id, email, 'Juan Dela Cruz', 'operations', 'ACTIVE',
+--        jsonb_build_object('email', email, 'fullName', 'Juan Dela Cruz', 'role', 'operations',
 --                           'status', 'ACTIVE', 'department', 'Operations')
 -- from auth.users where email = 'juan@example.com'
 -- on conflict (email) do update

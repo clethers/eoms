@@ -5,12 +5,12 @@ import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
 import { getProfiles } from '../../services/userService.js';
 
-// Crew picker for dispatch modals: active field inspectors only, no default selection.
+// Crew picker for dispatch modals: active Operations crew only, no default selection.
 async function buildCrewSelectHtml(selectId) {
     let crew = [];
     try {
         const profiles = await getProfiles();
-        crew = profiles.filter(p => p.role === 'field_inspector' && (!p.status || p.status === 'ACTIVE'));
+        crew = profiles.filter(p => p.role === 'operations' && (!p.status || p.status === 'ACTIVE'));
         crew.sort((a, b) => String(a.fullName || '').localeCompare(String(b.fullName || '')));
     } catch (e) {
         console.error('Failed to load crew list:', e);

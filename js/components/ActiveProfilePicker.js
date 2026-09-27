@@ -10,7 +10,7 @@ const ROLE_LABELS = {
     admin: 'Admin/Owner',
     customer_care_manager: 'Customer Care',
     lead_engineer: 'Engineering',
-    field_inspector: 'Operations'
+    operations: 'Operations'
 };
 
 // Workspace prefixes each role may open. Admin sees everything.
@@ -18,7 +18,7 @@ const ROLE_PREFIXES = {
     admin: ['/admin', '/manager', '/ocular'],
     customer_care_manager: ['/manager'],
     lead_engineer: ['/manager'],
-    field_inspector: ['/ocular']
+    operations: ['/ocular']
 };
 
 let activeProfile = null;
@@ -29,7 +29,7 @@ export function roleLabel(role) {
 
 export function roleHome(role) {
     if (role === 'admin') return '/admin';
-    if (role === 'field_inspector') return '/ocular/home';
+    if (role === 'operations') return '/ocular/home';
     if (role === 'customer_care_manager' || role === 'lead_engineer') return '/manager';
     return null;
 }

@@ -29,7 +29,7 @@ create table if not exists public.profiles (
   auth_user_id uuid unique references auth.users(id) on delete set null,
   email        text unique,
   full_name    text,
-  role         text check (role in ('admin','customer_care_manager','lead_engineer','field_inspector')),
+  role         text constraint profiles_role_check check (role in ('admin','customer_care_manager','lead_engineer','operations')),
   status       text default 'ACTIVE' check (status in ('ACTIVE','SUSPENDED'))
 );
 

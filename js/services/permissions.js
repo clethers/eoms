@@ -2,7 +2,7 @@
 // Designed to map 1:1 to Postgres RLS policies in Phase 2.
 
 export const ROLES = {
-    FIELD_INSPECTOR: 'field_inspector',
+    OPERATIONS: 'operations',
     CUSTOMER_CARE_MANAGER: 'customer_care_manager',
     LEAD_ENGINEER: 'lead_engineer',
     ADMIN: 'admin'
@@ -12,7 +12,7 @@ export const PERMISSIONS_MATRIX = [
     {
         resource: 'ocular_inspections',
         operation: 'create_edit_own',
-        allowedRoles: [ROLES.FIELD_INSPECTOR, ROLES.CUSTOMER_CARE_MANAGER, ROLES.LEAD_ENGINEER, ROLES.ADMIN]
+        allowedRoles: [ROLES.OPERATIONS, ROLES.CUSTOMER_CARE_MANAGER, ROLES.LEAD_ENGINEER, ROLES.ADMIN]
     },
     {
         resource: 'ocular_inspections',
@@ -27,7 +27,7 @@ export const PERMISSIONS_MATRIX = [
     {
         resource: 'installation_records',
         operation: 'create_edit',
-        allowedRoles: [ROLES.FIELD_INSPECTOR, ROLES.CUSTOMER_CARE_MANAGER, ROLES.LEAD_ENGINEER, ROLES.ADMIN],
+        allowedRoles: [ROLES.OPERATIONS, ROLES.CUSTOMER_CARE_MANAGER, ROLES.LEAD_ENGINEER, ROLES.ADMIN],
         condition: 'own_assigned_rn_for_inspector'
     },
     {
@@ -48,7 +48,7 @@ export const PERMISSIONS_MATRIX = [
     {
         resource: 'support_tickets',
         operation: 'file',
-        allowedRoles: [ROLES.FIELD_INSPECTOR, ROLES.CUSTOMER_CARE_MANAGER, ROLES.LEAD_ENGINEER, ROLES.ADMIN]
+        allowedRoles: [ROLES.OPERATIONS, ROLES.CUSTOMER_CARE_MANAGER, ROLES.LEAD_ENGINEER, ROLES.ADMIN]
     },
     {
         resource: 'support_tickets',
