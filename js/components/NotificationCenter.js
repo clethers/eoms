@@ -2,6 +2,7 @@ import { getAll, put, COLLECTIONS, dbEvents } from '../services/localDb.js';
 import { getActiveProfileId, profileEvents } from './ActiveProfilePicker.js';
 import { escapeHTML } from '../shared/security.js';
 import { supabase } from '../services/supabaseClient.js';
+import { icon } from '../shared/icons.js';
 
 // Module-level state so repeated calls never stack listeners/channels
 let notifChannel = null;
@@ -48,8 +49,8 @@ export async function renderNotificationCenter(containerId) {
         notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         container.innerHTML = `
-            <div id="bell-icon" style="font-size: 1.5rem; position: relative; color: white;">
-                &#x1F514;&#xFE0E;
+            <div id="bell-icon" title="Notifications" aria-label="Notifications" style="font-size: 1.5rem; position: relative; color: var(--brand-blue); display: inline-flex; align-items: center; cursor: pointer;">
+                ${icon('bell')}
                 ${unreadCount > 0 ? `<span style="position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; font-size: 0.75rem; padding: 2px 6px;">${unreadCount}</span>` : ''}
             </div>
             <div id="notif-dropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; width: 300px; max-height: 400px; overflow-y: auto; z-index: 2000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #333;">

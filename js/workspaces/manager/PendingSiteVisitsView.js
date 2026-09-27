@@ -3,6 +3,7 @@ import { liveRefresh } from '../../services/realtime.js';
 import { getAll, COLLECTIONS } from '../../services/localDb.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class PendingSiteVisitsView {
     async render() {
@@ -52,7 +53,7 @@ export default class PendingSiteVisitsView {
                                 <td>${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : formatDateTime(i.dateTime))}</td>
                                 <td><span style="padding: 0.2rem 0.5rem; background: #e2e8f0; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(i.status))}</span></td>
                                 <td>
-                                    ${showUnlock ? `<button class="unlock-btn btn-sm" data-id="${i.id}" title="Unlock Early" style="background: #f59e0b; color: white;">Unlock</button>` : ''}
+                                    ${showUnlock ? `<button class="unlock-btn btn-sm" data-id="${i.id}" title="Unlock Early" aria-label="Unlock" style="background: #f59e0b; color: white;">${btnContent('unlock', 'Unlock')}</button>` : ''}
                                 </td>
                             </tr>
                             `;

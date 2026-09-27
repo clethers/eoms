@@ -7,6 +7,7 @@ import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML, isValidBase64Image } from '../../shared/security.js';
 import { navigateTo } from '../../components/Router.js';
 import { compressImages, toPhotoList } from '../../shared/imageCompress.js';
+import { btnContent, icon, setBtnLabel } from '../../shared/icons.js';
 
 const MAX_INSTALLATION_PHOTOS = 30;
 
@@ -42,12 +43,12 @@ export default class InstallationFormView {
             nav = `
                 <div class="form-nav">
                     <div class="form-nav__start">
-                        ${this.step > 1 ? '<button type="button" id="prev-btn">Previous</button>' : '<button type="button" id="cancel-btn">Cancel</button>'}
-                        <button type="button" id="preview-ocular-btn">Preview Ocular Inspection</button>
+                        ${this.step > 1 ? `<button type="button" id="prev-btn">${btnContent('chevron-left', 'Previous')}</button>` : `<button type="button" id="cancel-btn">${btnContent('x', 'Cancel')}</button>`}
+                        <button type="button" id="preview-ocular-btn">${btnContent('eye', 'Preview Ocular Inspection')}</button>
                     </div>
                     <div class="form-nav__end">
-                        ${this.step < 4 ? '<button type="button" id="next-btn">Next</button>' : ''}
-                        ${this.step === 4 ? '<button type="submit" id="submit-btn">Submit Installation Record</button>' : ''}
+                        ${this.step < 4 ? `<button type="button" id="next-btn">${btnContent('chevron-right', 'Next', true)}</button>` : ''}
+                        ${this.step === 4 ? `<button type="submit" id="submit-btn">${btnContent('send', 'Submit Installation Record')}</button>` : ''}
                     </div>
                 </div>
             `;
@@ -125,10 +126,10 @@ export default class InstallationFormView {
                 if (modal.style.display === 'none') {
                     modal.innerHTML = buildInspectionSummaryHtml(this.linkedOcular);
                     modal.style.display = 'block';
-                    previewBtn.textContent = 'Hide Ocular Preview';
+                    setBtnLabel(previewBtn, 'Hide Ocular Preview');
                 } else {
                     modal.style.display = 'none';
-                    previewBtn.textContent = 'Preview Ocular Inspection';
+                    setBtnLabel(previewBtn, 'Preview Ocular Inspection');
                 }
             });
         }
@@ -236,7 +237,7 @@ export default class InstallationFormView {
         container.innerHTML = this.photos.map((p, idx) => `
             <div class="photo-thumb">
                 <img src="${p}" alt="Photo ${idx + 1}" loading="lazy" />
-                <button type="button" class="photo-thumb-remove" data-idx="${idx}" aria-label="Remove photo ${idx + 1}">✕</button>
+                <button type="button" class="photo-thumb-remove" data-idx="${idx}" aria-label="Remove photo ${idx + 1}">${icon('x')}</button>
             </div>
         `).join('');
         const count = this.container.querySelector('#photo-count');
@@ -293,7 +294,7 @@ export default class InstallationFormView {
                         <tr style="border-bottom: 1px solid #eee;">
                             <td style="padding: 0.5rem;">${escapeHTML(i.installationNo)}</td>
                             <td style="padding: 0.5rem;">${escapeHTML(i.clientName)}</td>
-                            <td style="padding: 0.5rem;"><button type="button" class="start-btn btn-sm" data-idx="${idx}">Start Report</button></td>
+                            <td style="padding: 0.5rem;"><button type="button" class="start-btn btn-sm" data-idx="${idx}" title="Start Report" aria-label="Start Report">${btnContent('play', 'Start Report')}</button></td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -422,13 +423,13 @@ export default class InstallationFormView {
                     <label style="font-size: 1.1rem; border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Installer Name & Signature</label>
                     <input type="text" name="installerName" value="${this.formData.installerName || ''}" placeholder="Enter Installer Name" required>
                     <canvas id="installer-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; width: 100%; border-radius: 4px; background: white;"></canvas>
-                    <div class="sig-actions"><button type="button" id="clear-installer" class="btn-danger">Clear Signature</button></div>
+                    <div class="sig-actions"><button type="button" id="clear-installer" class="btn-danger">${btnContent('eraser', 'Clear Signature')}</button></div>
                 </div>
                 <div class="form-group sig-field" style="margin: 0; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
                     <label style="font-size: 1.1rem; border-bottom: 1px solid var(--brand-blue-soft); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">Client Rep Name & Signature</label>
                     <input type="text" name="clientRepName" value="${this.formData.clientRepName || ''}" placeholder="Enter Client Rep Name" required>
                     <canvas id="clientrep-pad" width="400" height="200" style="border: 1px solid #ccc; display: block; width: 100%; border-radius: 4px; background: white;"></canvas>
-                    <div class="sig-actions"><button type="button" id="clear-clientrep" class="btn-danger">Clear Signature</button></div>
+                    <div class="sig-actions"><button type="button" id="clear-clientrep" class="btn-danger">${btnContent('eraser', 'Clear Signature')}</button></div>
                 </div>
             </div>
         `;

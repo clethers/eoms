@@ -5,6 +5,7 @@ import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML } from '../../shared/security.js';
 import { navigateTo } from '../../components/Router.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class HistoryView {
     async render() {
@@ -15,7 +16,7 @@ export default class HistoryView {
             <h2>History</h2>
             <div id="history-list">Loading...</div>
             <div id="history-preview-modal" style="display: none; margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; position: relative;">
-                <button id="close-preview" style="position: absolute; right: 1rem; top: 1rem;">Close</button>
+                <button id="close-preview" style="position: absolute; right: 1rem; top: 1rem;">${btnContent('x', 'Close')}</button>
                 <div id="history-preview-content"></div>
             </div>
         `;
@@ -46,8 +47,8 @@ export default class HistoryView {
                                     <td><span style="padding: 0.2rem 0.5rem; background: #e2e8f0; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(i.status || 'DRAFT'))}</span></td>
                                     <td>
                                         <div class="table-actions">
-                                        <button class="btn-sm" data-action="preview" data-id="${i.id}" title="View Summary">View</button>
-                                        ${(i.status === 'DRAFT' || i.status === 'REJECTED') ? `<button class="btn-sm" data-action="edit" data-id="${i.id}" title="Edit" style="background: var(--brand-green); color: white;">Edit</button>` : ''}
+                                        <button class="btn-sm" data-action="preview" data-id="${i.id}" title="View Summary" aria-label="View">${btnContent('eye', 'View')}</button>
+                                        ${(i.status === 'DRAFT' || i.status === 'REJECTED') ? `<button class="btn-sm" data-action="edit" data-id="${i.id}" title="Edit" aria-label="Edit" style="background: var(--brand-green); color: white;">${btnContent('pencil', 'Edit')}</button>` : ''}
                                         </div>
                                     </td>
                                 </tr>

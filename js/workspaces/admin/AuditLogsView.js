@@ -1,5 +1,6 @@
 import { getLogs, exportLogsCSV } from '../../services/auditLogService.js';
 import { escapeHTML } from '../../shared/security.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class AuditLogsView {
     async render() {
@@ -9,7 +10,7 @@ export default class AuditLogsView {
         container.innerHTML = `
             <div class="page-header">
                 <h2>Audit Logs</h2>
-                <button id="export-csv-btn">Export CSV</button>
+                <button id="export-csv-btn">${btnContent('sheet', 'Export CSV')}</button>
             </div>
             <div class="toolbar">
                 <input type="text" id="filter-actor" placeholder="Filter by Actor Email">
@@ -24,7 +25,7 @@ export default class AuditLogsView {
                     <option value="DATA_EXPORT">Data Export</option>
                     <option value="CLIENT_RECORDS">Client Records</option>
                 </select>
-                <button id="apply-filters-btn">Apply Filters</button>
+                <button id="apply-filters-btn">${btnContent('filter', 'Apply Filters')}</button>
             </div>
             <div id="logs-table-container" style="margin-top: 1rem;">
                 <div class="skeleton skeleton-table-row"></div>

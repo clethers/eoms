@@ -3,6 +3,7 @@ import { fetchSupportTickets, resolveSupportTicket } from '../../services/dataSe
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class SupportTicketsHubView {
     async render() {
@@ -45,7 +46,7 @@ export default class SupportTicketsHubView {
                                 <td>${escapeHTML(t.priority)}</td>
                                 <td>${escapeHTML(formatStatus(t.status))}</td>
                                 <td>
-                                    ${t.status === 'OPEN' ? `<button class="resolve-btn btn-sm" data-id="${t.id}">Resolve</button>` : 'Resolved'}
+                                    ${t.status === 'OPEN' ? `<button class="resolve-btn btn-sm" data-id="${t.id}" title="Resolve" aria-label="Resolve">${btnContent('check', 'Resolve')}</button>` : 'Resolved'}
                                 </td>
                             </tr>
                         `).join('')}

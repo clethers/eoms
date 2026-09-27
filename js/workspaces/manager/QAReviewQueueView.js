@@ -3,6 +3,7 @@ import { fetchPendingQAInspections, updateInspectionStatus } from '../../service
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML } from '../../shared/security.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class QAReviewQueueView {
     async render() {
@@ -27,7 +28,7 @@ export default class QAReviewQueueView {
         
         previewModal.innerHTML = `
             <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90vw; max-height: 90vh; overflow-y: auto; margin: 5vh auto; position: relative;">
-                <button type="button" id="close-preview" style="position: absolute; top: 1rem; right: 1rem; background: #e2e8f0; height: var(--control-h);">Close</button>
+                <button type="button" id="close-preview" style="position: absolute; top: 1rem; right: 1rem; background: #e2e8f0; height: var(--control-h);">${btnContent('x', 'Close')}</button>
                 <div id="preview-content"></div>
             </div>
         `;
@@ -60,9 +61,9 @@ export default class QAReviewQueueView {
                                 <td>${escapeHTML(i.clientName || 'N/A')}</td>
                                 <td>
                                     <div class="table-actions">
-                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="preview">View Summary</button>
-                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="approve">Approve</button>
-                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="reject" style="background: #ef4444; color: white;">Reject</button>
+                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="preview" title="View Summary" aria-label="View Summary">${btnContent('eye', 'View Summary')}</button>
+                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="approve" title="Approve" aria-label="Approve">${btnContent('check-circle', 'Approve')}</button>
+                                    <button class="qa-action-btn btn-sm" data-id="${i.id}" data-action="reject" title="Reject" aria-label="Reject" style="background: #ef4444; color: white;">${btnContent('x-circle', 'Reject')}</button>
                                     </div>
                                 </td>
                             </tr>

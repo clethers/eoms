@@ -1,6 +1,7 @@
 import { supabase } from '../services/supabaseClient.js';
 import { escapeHTML } from '../shared/security.js';
 import { signOutEverywhereLocal } from './ActiveProfilePicker.js';
+import { btnContent, setBtnLabel } from '../shared/icons.js';
 
 const MSG_NETWORK = 'No network connection. Check your internet and try again.';
 
@@ -90,7 +91,7 @@ export function renderLoginView(container, { message = '', onSignedIn } = {}) {
                 <input id="login-password" class="login-input" type="password" name="password"
                     autocomplete="current-password" required>
                 <div class="login-error" role="alert" aria-live="assertive"${message ? '' : ' hidden'}>${escapeHTML(message)}</div>
-                <button type="submit" class="login-submit">Sign in</button>
+                <button type="submit" class="login-submit">${btnContent('log-in', 'Sign in')}</button>
             </form>
         </div>
     `;
@@ -109,7 +110,7 @@ export function renderLoginView(container, { message = '', onSignedIn } = {}) {
         submitBtn.disabled = loading;
         emailEl.disabled = loading;
         passEl.disabled = loading;
-        submitBtn.textContent = loading ? 'Signing in...' : 'Sign in';
+        setBtnLabel(submitBtn, loading ? 'Signing in...' : 'Sign in');
         form.classList.toggle('is-loading', loading);
     };
 

@@ -1,6 +1,7 @@
 import { getProfiles, createUser } from '../../services/userService.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class UserManagementView {
     async render() {
@@ -33,7 +34,7 @@ export default class UserManagementView {
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <button type="submit">Add User</button>
+                    <button type="submit">${btnContent('plus', 'Add User')}</button>
                 </form>
             </div>
             <div id="users-table-container">
@@ -84,7 +85,7 @@ export default class UserManagementView {
                                 <td>${escapeHTML(p.role)}</td>
                                 <td><span style="background: ${p.status === 'ACTIVE' ? '#d1fae5' : '#fee2e2'}; color: ${p.status === 'ACTIVE' ? '#065f46' : '#991b1b'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(p.status))}</span></td>
                                 <td>
-                                    <button class="user-profile-btn btn-sm" data-id="${p.id}" title="Staff Profile" style="background-color: #6366f1; color: white;">Profile</button>
+                                    <button class="user-profile-btn btn-sm" data-id="${p.id}" title="Staff Profile" aria-label="Profile" style="background-color: #6366f1; color: white;">${btnContent('user', 'Profile')}</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -140,8 +141,8 @@ export default class UserManagementView {
                                     <input type="text" name="department" value="${escapeHTML(profile.department || '')}">
                                 </div>
                                 <div class="modal-actions">
-                                    <button type="button" id="staff-close-btn" style="background: #e2e8f0; color: #333;">Close</button>
-                                    <button type="submit" style="background: var(--brand-green); color: white;">Save Changes</button>
+                                    <button type="button" id="staff-close-btn" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Close')}</button>
+                                    <button type="submit" style="background: var(--brand-green); color: white;">${btnContent('save', 'Save Changes')}</button>
                                 </div>
                             </form>
                         </div>

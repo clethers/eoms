@@ -3,6 +3,7 @@ import { fetchAllInstallations } from '../../services/dataService.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
 import { printInstallationRegister } from '../../shared/certificates.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class InstallationsRegisterView {
     async render() {
@@ -43,7 +44,7 @@ export default class InstallationsRegisterView {
                                 <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>${escapeHTML(formatStatus(i.status))}</td>
                                 <td>
-                                    <button class="print-btn btn-sm" data-id="${i.id}">Print Register</button>
+                                    <button class="print-btn btn-sm" data-id="${i.id}" title="Print Register" aria-label="Print Register">${btnContent('printer', 'Print Register')}</button>
                                 </td>
                             </tr>
                         `).join('')}

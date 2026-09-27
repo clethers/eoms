@@ -851,3 +851,34 @@ textarea { font: inherit; }
 .btn-danger { background: #ef4444; color: white; }
 .btn-danger:hover { background: #dc2626; }
 /* ===== end alignment pass ===== */
+
+/* ===== Icons (2026-09-28) ===== */
+/* Line icons from js/shared/icons.js: 24x24 stroke drawings that take the text colour. */
+.ic {
+  width: 1.1em; height: 1.1em; flex: 0 0 auto;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -0.15em;
+}
+/* Clicks land on the button itself, so handlers reading e.target.dataset keep working */
+.ic, .btn-label { pointer-events: none; }
+button:has(> .ic) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4em;
+}
+#bell-icon .ic { width: 1.4rem; height: 1.4rem; }
+.photo-thumb-remove .ic { width: 14px; height: 14px; stroke-width: 3; }
+
+/* Phones: table row actions become icon-only squares (label kept for screen readers) */
+@media screen and (max-width: 640px) {
+  td button:has(> .btn-label) {
+    position: relative; width: 44px; min-width: 44px; height: 44px; min-height: 44px;
+    padding: 0; gap: 0;
+  }
+  td button:has(> .btn-label) .ic { width: 1.25rem; height: 1.25rem; }
+  td button > .btn-label {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+    white-space: nowrap; border: 0;
+  }
+}
+/* ===== end icons ===== */

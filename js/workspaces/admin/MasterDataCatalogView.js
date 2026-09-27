@@ -1,5 +1,6 @@
 import { getCatalog, addCatalogItem, deleteCatalogItem } from '../../services/masterDataService.js';
 import { escapeHTML } from '../../shared/security.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class MasterDataCatalogView {
     async render() {
@@ -36,7 +37,7 @@ export default class MasterDataCatalogView {
                         <label>Unit Price</label>
                         <input type="number" name="unitPrice" min="0" placeholder="Optional">
                     </div>
-                    <button type="submit">Add Item</button>
+                    <button type="submit">${btnContent('plus', 'Add Item')}</button>
                 </form>
             </div>
             <div id="catalog-table-container">
@@ -96,8 +97,8 @@ export default class MasterDataCatalogView {
                                 <td>${c.unitPrice !== null && c.unitPrice !== undefined ? escapeHTML(c.unitPrice.toLocaleString()) : '-'}</td>
                                 <td>
                                     <div class="table-actions">
-                                    <button class="edit-btn btn-sm" data-key="${escapeHTML(c.itemKey)}" title="Edit" style="background-color: #f59e0b; color: white;">Edit</button>
-                                    <button class="delete-btn btn-sm" data-key="${escapeHTML(c.itemKey)}" title="Delete" style="background-color: #ef4444; color: white;">Delete</button>
+                                    <button class="edit-btn btn-sm" data-key="${escapeHTML(c.itemKey)}" title="Edit" aria-label="Edit" style="background-color: #f59e0b; color: white;">${btnContent('pencil', 'Edit')}</button>
+                                    <button class="delete-btn btn-sm" data-key="${escapeHTML(c.itemKey)}" title="Delete" aria-label="Delete" style="background-color: #ef4444; color: white;">${btnContent('trash', 'Delete')}</button>
                                     </div>
                                 </td>
                             </tr>
@@ -145,8 +146,8 @@ export default class MasterDataCatalogView {
                                 </div>
                             </div>
                             <div class="modal-actions">
-                                <button id="edit-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
-                                <button id="edit-save">Save Changes</button>
+                                <button id="edit-cancel" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Cancel')}</button>
+                                <button id="edit-save">${btnContent('save', 'Save Changes')}</button>
                             </div>
                         </div>
                     `;

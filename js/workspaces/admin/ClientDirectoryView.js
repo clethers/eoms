@@ -2,6 +2,7 @@ import { formatDateTime } from '../../shared/dateFormat.js';
 import { fetchAllInspections, archiveInspection } from '../../services/dataService.js';
 import { escapeHTML } from '../../shared/security.js';
 import { printOcularCertificate } from '../../shared/certificates.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class ClientDirectoryView {
     async render() {
@@ -43,8 +44,8 @@ export default class ClientDirectoryView {
                                 <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>
                                     <div class="table-actions">
-                                    <button class="print-btn btn-sm" data-id="${i.id}" title="Print Certificate" style="background: var(--brand-green); color: white;">Print</button>
-                                    <button class="archive-btn btn-sm" data-id="${i.id}" title="Archive Record" style="background-color: #ef4444; color: white;">Archive</button>
+                                    <button class="print-btn btn-sm" data-id="${i.id}" title="Print Certificate" aria-label="Print" style="background: var(--brand-green); color: white;">${btnContent('printer', 'Print')}</button>
+                                    <button class="archive-btn btn-sm" data-id="${i.id}" title="Archive Record" aria-label="Archive" style="background-color: #ef4444; color: white;">${btnContent('archive', 'Archive')}</button>
                                     </div>
                                 </td>
                             </tr>

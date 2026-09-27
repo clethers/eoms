@@ -3,6 +3,7 @@
 // are imported across the app.)
 import { supabase } from '../services/supabaseClient.js';
 import { escapeHTML } from '../shared/security.js';
+import { btnContent, setBtnLabel } from '../shared/icons.js';
 
 export const profileEvents = new EventTarget();
 
@@ -125,14 +126,14 @@ export function renderProfilePicker(containerId) {
                 <span class="user-badge-name">${escapeHTML(p.fullName || '')}</span>
                 <span class="user-badge-role">${escapeHTML(roleLabel(p.role))}</span>
             </div>
-            <button type="button" class="signout-btn">Sign out</button>
+            <button type="button" class="signout-btn">${btnContent('log-out', 'Sign out')}</button>
         </div>
     `;
 
     const btn = container.querySelector('.signout-btn');
     btn.addEventListener('click', async () => {
         btn.disabled = true;
-        btn.textContent = 'Signing out...';
+        setBtnLabel(btn, 'Signing out...');
         // Wait for the server logout (max ~3s) before leaving the page; the
         // SIGNED_OUT listener in main.js defers to this redirect.
         await signOutEverywhereLocal();

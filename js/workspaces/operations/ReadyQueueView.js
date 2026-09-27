@@ -1,6 +1,7 @@
 import { liveRefresh } from '../../services/realtime.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML } from '../../shared/security.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class ReadyQueueView {
     async render() {
@@ -43,10 +44,10 @@ export default class ReadyQueueView {
                                     <td>${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : 'Not Scheduled')}</td>
                                     <td>
                                         <div class="table-actions">
-                                        <button class="btn-sm" data-action="preview" data-id="${i.id}" data-ocular="${i.ocularId}" title="View Ocular Summary">View</button>
+                                        <button class="btn-sm" data-action="preview" data-id="${i.id}" data-ocular="${i.ocularId}" title="View Ocular Summary" aria-label="View">${btnContent('eye', 'View')}</button>
                                         ${isLocked
-                                            ? `<button disabled class="btn-sm" title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed;">Locked</button>`
-                                            : `<button class="btn-sm" data-action="start" data-id="${i.id}" title="Start Install" style="background-color: var(--brand-green); color: white;">Install</button>`
+                                            ? `<button disabled class="btn-sm" title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed;" aria-label="Locked">${btnContent('lock', 'Locked')}</button>`
+                                            : `<button class="btn-sm" data-action="start" data-id="${i.id}" title="Start Install" aria-label="Install" style="background-color: var(--brand-green); color: white;">${btnContent('wrench', 'Install')}</button>`
                                         }
                                         </div>
                                     </td>

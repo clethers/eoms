@@ -4,6 +4,7 @@ import { getProfiles } from '../../services/userService.js';
 import { fetchAllAssignedInspections, fetchPendingInstallations, fetchMySubmittedInspections } from '../../services/dataService.js';
 import { navigateTo } from '../../components/Router.js';
 import { escapeHTML } from '../../shared/security.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class HomeView {
     async render() {
@@ -68,8 +69,8 @@ export default class HomeView {
                 </div>
 
                 <div style="display:flex; gap: 1rem; flex-wrap: wrap;">
-                    <button id="home-new-inspection-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem;">New Inspection</button>
-                    <button id="home-tickets-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem; background: #e2e8f0; color: #334155;">Support Tickets</button>
+                    <button id="home-new-inspection-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem;">${btnContent('plus', 'New Inspection')}</button>
+                    <button id="home-tickets-btn" style="padding: 0.75rem 1.5rem; font-size: 1rem; background: #e2e8f0; color: #334155;">${btnContent('lifebuoy', 'Support Tickets')}</button>
                 </div>
             `;
 

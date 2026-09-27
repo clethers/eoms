@@ -5,6 +5,7 @@ import { getItemsByCategory } from '../../services/masterDataService.js';
 import { navigateTo } from '../../components/Router.js';
 import { localDateTimeInputValue } from '../../shared/dateFormat.js';
 import { compressImages, toPhotoList } from '../../shared/imageCompress.js';
+import { btnContent, icon } from '../../shared/icons.js';
 
 const MAX_PHOTOS_PER_SLOT = 10;
 
@@ -58,11 +59,11 @@ export default class OcularFormView {
                     ${content}
                 </div>
                 <div class="form-nav">
-                    <div class="form-nav__start">${this.step > 1 ? '<button type="button" id="prev-btn">Previous</button>' : ''}</div>
+                    <div class="form-nav__start">${this.step > 1 ? `<button type="button" id="prev-btn">${btnContent('chevron-left', 'Previous')}</button>` : ''}</div>
                     <div class="form-nav__end">
-                        ${this.step === 4 ? '<button type="button" id="save-draft-btn">Save Draft</button>' : ''}
-                        ${this.step < 4 ? '<button type="button" id="next-btn">Next</button>' : ''}
-                        ${this.step === 4 ? '<button type="submit" id="submit-btn">Submit for Approval</button>' : ''}
+                        ${this.step === 4 ? `<button type="button" id="save-draft-btn">${btnContent('save', 'Save Draft')}</button>` : ''}
+                        ${this.step < 4 ? `<button type="button" id="next-btn">${btnContent('chevron-right', 'Next', true)}</button>` : ''}
+                        ${this.step === 4 ? `<button type="submit" id="submit-btn">${btnContent('send', 'Submit for Approval')}</button>` : ''}
                     </div>
                 </div>
             </form>
@@ -319,13 +320,13 @@ export default class OcularFormView {
                 const nextBtn = this.container.querySelector('#next-btn');
                 if (nextBtn) {
                     nextBtn.disabled = true;
-                    nextBtn.textContent = 'Fetching GPS...';
+                    nextBtn.innerHTML = btnContent('map-pin', 'Fetching GPS...');
                 }
                 
                 const restoreBtn = () => {
                     if (nextBtn) {
                         nextBtn.disabled = false;
-                        nextBtn.textContent = 'Next';
+                        nextBtn.innerHTML = btnContent('chevron-right', 'Next', true);
                     }
                 };
 
@@ -366,7 +367,7 @@ export default class OcularFormView {
         return `
             <div class="page-header">
                 <h3>${isNema ? 'NEMA 3R Enclosure' : 'Main Distribution Panelboard'}</h3>
-                <button type="button" id="btn-change-feeder" style="height: var(--control-h);">Change Feeder Path</button>
+                <button type="button" id="btn-change-feeder" style="height: var(--control-h);">${btnContent('branch', 'Change Feeder Path')}</button>
             </div>
             
             <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
@@ -544,7 +545,7 @@ export default class OcularFormView {
             </div>
             
             <div class="modal-actions" style="margin: 0 0 2rem;">
-                <button type="button" id="download-photos-btn" style="background: var(--brand-green);">Download Photos</button>
+                <button type="button" id="download-photos-btn" style="background: var(--brand-green);">${btnContent('download', 'Download Photos')}</button>
             </div>
 
             <h3>Works & Sign-off</h3>
@@ -565,13 +566,13 @@ export default class OcularFormView {
                 <label>Inspector Name & Signature</label>
                 <input type="text" name="inspectedByName" value="${this.formData.inspectedByName || ''}" placeholder="Inspector Name" required>
                 <canvas id="inspector-pad" width="400" height="200" style="border: 1px solid #ccc; display: block;"></canvas>
-                <div class="sig-actions"><button type="button" id="clear-inspector" class="btn-danger">Clear</button></div>
+                <div class="sig-actions"><button type="button" id="clear-inspector" class="btn-danger">${btnContent('eraser', 'Clear')}</button></div>
             </div>
             <div class="form-group sig-field">
                 <label>Witness Name & Signature</label>
                 <input type="text" name="witnessedByName" value="${this.formData.witnessedByName || ''}" placeholder="Witness Name" required>
                 <canvas id="witness-pad" width="400" height="200" style="border: 1px solid #ccc; display: block;"></canvas>
-                <div class="sig-actions"><button type="button" id="clear-witness" class="btn-danger">Clear</button></div>
+                <div class="sig-actions"><button type="button" id="clear-witness" class="btn-danger">${btnContent('eraser', 'Clear')}</button></div>
             </div>
         `;
     }
@@ -613,7 +614,7 @@ export default class OcularFormView {
         thumbs.innerHTML = list.map((src, idx) => `
             <div class="photo-thumb">
                 <img src="${src}" alt="Photo ${idx + 1}" loading="lazy" />
-                <button type="button" class="photo-thumb-remove" data-key="${key}" data-idx="${idx}" aria-label="Remove photo ${idx + 1}">✕</button>
+                <button type="button" class="photo-thumb-remove" data-key="${key}" data-idx="${idx}" aria-label="Remove photo ${idx + 1}">${icon('x')}</button>
             </div>
         `).join('');
         if (count) count.textContent = `${list.length} / ${MAX_PHOTOS_PER_SLOT}`;

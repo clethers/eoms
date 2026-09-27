@@ -1,6 +1,7 @@
 import { getAll, COLLECTIONS } from '../../services/localDb.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class CalendarView {
     constructor() {
@@ -19,9 +20,9 @@ export default class CalendarView {
             <div class="page-header">
                 <h2>Calendar</h2>
                 <div class="toolbar">
-                    <button id="prev-month" style="background: #e2e8f0;">&larr; Prev</button>
+                    <button id="prev-month" style="background: #e2e8f0;">${btnContent('chevron-left', 'Prev')}</button>
                     <span id="month-label" style="font-size: 1.2rem; font-weight: bold; min-width: 150px; text-align: center;"></span>
-                    <button id="next-month" style="background: #e2e8f0;">Next &rarr;</button>
+                    <button id="next-month" style="background: #e2e8f0;">${btnContent('chevron-right', 'Next', true)}</button>
                 </div>
             </div>
             <div id="calendar-container">Loading...</div>
@@ -160,7 +161,7 @@ export default class CalendarView {
                     <strong>Address:</strong> ${escapeHTML(addr || 'N/A')}
                 </div>
                 <div class="modal-actions" style="margin-top: 0;">
-                    <button id="close-modal-btn" style="background: #e2e8f0; color: #333; border-radius: 4px;">Close</button>
+                    <button id="close-modal-btn" style="background: #e2e8f0; color: #333; border-radius: 4px;">${btnContent('x', 'Close')}</button>
                 </div>
             </div>
         `;

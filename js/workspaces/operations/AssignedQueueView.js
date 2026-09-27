@@ -3,6 +3,7 @@ import { fetchAllAssignedInspections } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { navigateTo } from '../../components/Router.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class AssignedQueueView {
     async render() {
@@ -57,8 +58,8 @@ export default class AssignedQueueView {
                                     <td style="padding: 0.5rem; font-weight: bold;">${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : 'Not Scheduled')}</td>
                                     <td style="padding: 0.5rem;">
                                         ${isLocked 
-                                            ? `<button disabled class="btn-sm" title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed;">Locked</button>`
-                                            : `<button class="start-inspection-btn btn-sm" data-id="${i.id}" data-rn="${escapeHTML(i.rnNo)}" title="Start Inspection" style="background-color: var(--brand-green); color: white;">Start</button>`
+                                            ? `<button disabled class="btn-sm" title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed;" aria-label="Locked">${btnContent('lock', 'Locked')}</button>`
+                                            : `<button class="start-inspection-btn btn-sm" data-id="${i.id}" data-rn="${escapeHTML(i.rnNo)}" title="Start Inspection" aria-label="Start" style="background-color: var(--brand-green); color: white;">${btnContent('play', 'Start')}</button>`
                                         }
                                     </td>
                                 </tr>

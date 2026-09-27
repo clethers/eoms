@@ -2,6 +2,7 @@ import { fetchSupportTickets, createSupportTicket, fetchMySubmittedInspections }
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class SupportTicketsView {
     async render() {
@@ -42,7 +43,7 @@ export default class SupportTicketsView {
                         <textarea name="description" rows="3" required></textarea>
                     </div>
                     <div>
-                        <button type="submit" style="height: var(--control-h);">Submit Ticket</button>
+                        <button type="submit" style="height: var(--control-h);">${btnContent('send', 'Submit Ticket')}</button>
                     </div>
                 </form>
             </div>

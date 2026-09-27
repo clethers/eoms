@@ -4,6 +4,7 @@ import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
 import { getProfiles } from '../../services/userService.js';
+import { btnContent } from '../../shared/icons.js';
 
 // Crew picker for dispatch modals: active Operations crew only, no default selection.
 async function buildCrewSelectHtml(selectId) {
@@ -63,8 +64,8 @@ export default class SalesPipelineView {
                             <label>Installation Address</label>
                             <input type="text" name="installationAddress" required>
                         </div>
-                        <button type="submit">Add Lead</button>
-                        <button type="button" id="bulk-import-btn" style="background-color: #64748b; color: white;">Bulk Import (Mock)</button>
+                        <button type="submit">${btnContent('plus', 'Add Lead')}</button>
+                        <button type="button" id="bulk-import-btn" style="background-color: #64748b; color: white;">${btnContent('upload', 'Bulk Import (Mock)')}</button>
                     </div>
                 </form>
             </div>
@@ -164,26 +165,26 @@ export default class SalesPipelineView {
                                 </td>
                                 <td>
                                     <div class="table-actions">
-                                    <button class="profile-btn btn-sm" data-id="${l.id}" title="View CRM Profile" style="background-color: #6366f1; color: white;">Profile</button>
-                                    ${l.ocularId ? `<button class="view-reports-btn btn-sm" data-id="${l.id}" title="View Project Reports" style="background-color: #f59e0b; color: white;">Reports</button>` : ''}
-                                    ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Ocular" style="background-color: var(--brand-green); color: white;">Dispatch</button>` : ''}
-                                    ${l.stage === 'SITE_VISIT_COMPLETED' ? `<button class="quote-btn btn-sm" data-id="${l.id}" title="Generate Quote" style="background-color: #8b5cf6; color: white;">Quote</button>` : ''}
-                                    ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn btn-sm" data-id="${l.id}" title="Dispatch Install">Install</button>` : ''}
+                                    <button class="profile-btn btn-sm" data-id="${l.id}" title="View CRM Profile" aria-label="Profile" style="background-color: #6366f1; color: white;">${btnContent('user', 'Profile')}</button>
+                                    ${l.ocularId ? `<button class="view-reports-btn btn-sm" data-id="${l.id}" title="View Project Reports" aria-label="Reports" style="background-color: #f59e0b; color: white;">${btnContent('clipboard-list', 'Reports')}</button>` : ''}
+                                    ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Ocular" aria-label="Dispatch" style="background-color: var(--brand-green); color: white;">${btnContent('truck', 'Dispatch')}</button>` : ''}
+                                    ${l.stage === 'SITE_VISIT_COMPLETED' ? `<button class="quote-btn btn-sm" data-id="${l.id}" title="Generate Quote" aria-label="Quote" style="background-color: #8b5cf6; color: white;">${btnContent('file-text', 'Quote')}</button>` : ''}
+                                    ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn btn-sm" data-id="${l.id}" title="Dispatch Install" aria-label="Install">${btnContent('wrench', 'Install')}</button>` : ''}
                                     </div>
                                 </td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
-                ${hasMore ? `<div style="text-align: center; margin-top: 1rem;"><button id="load-more-btn" style="padding: 0.5rem 2rem; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">Load More</button></div>` : ''}
+                ${hasMore ? `<div style="text-align: center; margin-top: 1rem;"><button id="load-more-btn" style="padding: 0.5rem 2rem; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${btnContent('chevrons-down', 'Load More')}</button></div>` : ''}
             </div>
 
             <!-- View Reports Modal -->
             <div id="reports-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
                 <div class="print-modal-content" style="background: white; padding: 2rem; border-radius: 8px; width: 900px; max-width: 95vw; max-height: 90vh; overflow-y: auto; position: relative;">
                     <div class="print-hide toolbar" style="position: absolute; top: 1rem; right: 1rem; gap: 0.5rem;">
-                        <button type="button" id="print-reports-btn" style="background: var(--brand-green); color: white;">Print / PDF</button>
-                        <button type="button" id="close-reports-btn" style="background: #e2e8f0;">Close</button>
+                        <button type="button" id="print-reports-btn" style="background: var(--brand-green); color: white;">${btnContent('printer', 'Print / PDF')}</button>
+                        <button type="button" id="close-reports-btn" style="background: #e2e8f0;">${btnContent('x', 'Close')}</button>
                     </div>
                     <h2 style="margin-top: 0;">Project Reports</h2>
                     <div style="display: flex; gap: 2rem; margin-top: 1rem;">
@@ -355,8 +356,8 @@ export default class SalesPipelineView {
                             </div>
                             
                             <div class="modal-actions">
-                                <button id="quote-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
-                                <button id="quote-confirm" style="background: #8b5cf6; color: white;">Save & Send Quote</button>
+                                <button id="quote-cancel" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Cancel')}</button>
+                                <button id="quote-confirm" style="background: #8b5cf6; color: white;">${btnContent('file-text', 'Save & Send Quote')}</button>
                             </div>
                         </div>
                     `;
@@ -472,10 +473,10 @@ export default class SalesPipelineView {
                                 </div>
                                 
                                 <div class="modal-actions modal-actions--split" style="margin-top: 0.5rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-                                    <button type="button" id="crm-archive-btn" style="background: #ef4444; color: white;">Archive Lead</button>
+                                    <button type="button" id="crm-archive-btn" style="background: #ef4444; color: white;">${btnContent('archive', 'Archive Lead')}</button>
                                     <div>
-                                        <button type="button" id="crm-close-btn" style="background: #e2e8f0; color: #333;">Close</button>
-                                        <button type="submit" style="background: var(--brand-green); color: white;">Save Changes</button>
+                                        <button type="button" id="crm-close-btn" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Close')}</button>
+                                        <button type="submit" style="background: var(--brand-green); color: white;">${btnContent('save', 'Save Changes')}</button>
                                     </div>
                                 </div>
                             </form>
@@ -552,8 +553,8 @@ export default class SalesPipelineView {
                                 <input type="datetime-local" id="dispatch-date" required>
                             </div>
                             <div class="modal-actions">
-                                <button id="dispatch-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
-                                <button id="dispatch-confirm" style="background: var(--brand-green); color: white;">Dispatch</button>
+                                <button id="dispatch-cancel" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Cancel')}</button>
+                                <button id="dispatch-confirm" style="background: var(--brand-green); color: white;">${btnContent('truck', 'Dispatch')}</button>
                             </div>
                         </div>
                     `;
@@ -614,8 +615,8 @@ export default class SalesPipelineView {
                                 <input type="datetime-local" id="dispatch-install-date" required>
                             </div>
                             <div class="modal-actions">
-                                <button id="dispatch-install-cancel" style="background: #e2e8f0; color: #333;">Cancel</button>
-                                <button id="dispatch-install-confirm">Dispatch</button>
+                                <button id="dispatch-install-cancel" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Cancel')}</button>
+                                <button id="dispatch-install-confirm">${btnContent('wrench', 'Dispatch')}</button>
                             </div>
                         </div>
                     `;

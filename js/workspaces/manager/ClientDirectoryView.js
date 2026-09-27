@@ -2,6 +2,7 @@ import { formatDateTime } from '../../shared/dateFormat.js';
 import { fetchAllInspections } from '../../services/dataService.js';
 import { escapeHTML } from '../../shared/security.js';
 import { printOcularCertificate } from '../../shared/certificates.js';
+import { btnContent } from '../../shared/icons.js';
 
 export default class ClientDirectoryView {
     async render() {
@@ -42,7 +43,7 @@ export default class ClientDirectoryView {
                                 <td>${escapeHTML(i.locationAddress || 'N/A')}</td>
                                 <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>
-                                    <button class="print-btn btn-sm" data-id="${i.id}">Print Certificate</button>
+                                    <button class="print-btn btn-sm" data-id="${i.id}" title="Print Certificate" aria-label="Print Certificate">${btnContent('printer', 'Print Certificate')}</button>
                                 </td>
                             </tr>
                         `).join('')}
