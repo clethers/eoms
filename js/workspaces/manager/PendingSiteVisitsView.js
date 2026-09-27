@@ -1,3 +1,4 @@
+import { formatDateTime } from '../../shared/dateFormat.js';
 import { liveRefresh } from '../../services/realtime.js';
 import { getAll, COLLECTIONS } from '../../services/localDb.js';
 import { escapeHTML } from '../../shared/security.js';
@@ -48,7 +49,7 @@ export default class PendingSiteVisitsView {
                                 <td>${escapeHTML(i.rnNo || 'Draft')}</td>
                                 <td>${escapeHTML(i.clientName || 'N/A')}</td>
                                 <td>${escapeHTML(i.locationAddress || 'N/A')}</td>
-                                <td>${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : (i.dateTime || 'N/A'))}</td>
+                                <td>${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : formatDateTime(i.dateTime))}</td>
                                 <td><span style="padding: 0.2rem 0.5rem; background: #e2e8f0; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(i.status))}</span></td>
                                 <td>
                                     ${showUnlock ? `<button class="unlock-btn" data-id="${i.id}" title="Unlock Early" style="font-size: 0.85rem; background: #f59e0b; color: white; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">Unlock</button>` : ''}

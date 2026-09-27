@@ -2,6 +2,7 @@ import { saveInstallationRecord, fetchPendingInstallations } from '../../service
 import { COLLECTIONS, get } from '../../services/localDb.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { initSignaturePad } from '../../shared/signaturePad.js';
+import { localDateTimeInputValue } from '../../shared/dateFormat.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML, isValidBase64Image } from '../../shared/security.js';
 import { navigateTo } from '../../components/Router.js';
@@ -81,7 +82,7 @@ export default class InstallationFormView {
                             installationNo: this.installationRecord.installationNo,
                             clientName: this.installationRecord.clientName,
                             scopeOfWorks: this.linkedOcular ? this.linkedOcular.scopeOfWorks : '',
-                            dateTime: new Date().toISOString().slice(0,16),
+                            dateTime: localDateTimeInputValue(),
                             // Pre-populate with ocular values if available
                             conduitPvc: this.linkedOcular ? (this.linkedOcular.conduitPvc || 0) : 0,
                             conduitEmt: this.linkedOcular ? (this.linkedOcular.conduitEmt || 0) : 0,
@@ -154,6 +155,15 @@ export default class InstallationFormView {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 this.saveData();
+
+                const missing = [];
+                if (!this.installerPad || this.installerPad.isEmpty()) missing.push('Installer signature');
+                if (!this.clientRepPad || this.clientRepPad.isEmpty()) missing.push('Client rep signature');
+                if (!this.photos || this.photos.length < 1) missing.push('At least 1 installation photo (Step 3)');
+                if (missing.length) {
+                    alert('Cannot submit yet. Missing:\n- ' + missing.join('\n- '));
+                    return;
+                }
                 
                 if (this.installerPad) this.formData.installerSigImg = this.installerPad.getDataUrl();
                 if (this.clientRepPad) this.formData.clientRepSigImg = this.clientRepPad.getDataUrl();

@@ -1,3 +1,4 @@
+import { formatDateTime } from '../../shared/dateFormat.js';
 import { fetchMySubmittedInspections } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
@@ -41,7 +42,7 @@ export default class SavedDraftsView {
                                 <tr>
                                     <td>${escapeHTML(i.rnNo || 'Draft')}</td>
                                     <td>${escapeHTML(i.clientName || 'N/A')}</td>
-                                    <td>${escapeHTML(i.dateTime || 'N/A')}</td>
+                                    <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                     <td><span style="padding: 0.2rem 0.5rem; background: #e2e8f0; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(i.status || 'DRAFT'))}</span></td>
                                     <td>
                                         <button data-action="preview" data-id="${i.id}" title="View Summary" style="font-size: 0.85rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">View</button>

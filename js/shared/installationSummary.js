@@ -1,3 +1,4 @@
+import { formatDateTime } from './dateFormat.js';
 import { escapeHTML } from './security.js';
 
 export function buildInstallationSummaryHtml(item) {
@@ -7,7 +8,7 @@ export function buildInstallationSummaryHtml(item) {
         <div class="inspection-summary">
             <h3>Installation Report: ${escapeHTML(item.installationNo || 'N/A')}</h3>
             <p><strong>Client:</strong> ${escapeHTML(item.clientName || 'N/A')}</p>
-            <p><strong>Date:</strong> ${escapeHTML(item.dateTime || 'N/A')}</p>
+            <p><strong>Date:</strong> ${escapeHTML(formatDateTime(item.dateTime))}</p>
             <p><strong>Scope:</strong> ${escapeHTML(item.scopeOfWorks || 'N/A')}</p>
             <p><strong>Commissioning Data:</strong> ${escapeHTML(item.commissioningData || 'N/A')}</p>
             <hr style="margin: 1rem 0;" />

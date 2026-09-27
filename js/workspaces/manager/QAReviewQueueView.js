@@ -98,8 +98,13 @@ export default class QAReviewQueueView {
                             qaNotes: qaNotes
                         });
                         
+                        // Only approval advances the lead; a failure here must not block approval.
                         if (action === 'approve') {
-                            await updateLeadStageByOcularId(id, 'SITE_VISIT_COMPLETED');
+                            try {
+                                await updateLeadStageByOcularId(id, 'SITE_VISIT_COMPLETED');
+                            } catch (stageErr) {
+                                console.error('Failed to update lead stage after approval:', stageErr);
+                            }
                         }
                         
                         alert('Status updated!');

@@ -6,7 +6,8 @@ import {
     clearActiveProfile,
     profileEvents,
     roleHome,
-    isPathAllowed
+    isPathAllowed,
+    isSignOutInProgress
 } from './components/ActiveProfilePicker.js';
 import { renderNotificationCenter } from './components/NotificationCenter.js';
 import { renderLoginView, loadProfileForUser } from './components/LoginView.js';
@@ -83,7 +84,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     supabase.auth.onAuthStateChange((event) => {
         if (event === 'SIGNED_OUT') {
             sessionStorage.removeItem('activeProfileId');
-            if (appBooted) {
+            // The Sign out button redirects itself once the server logout has
+            // finished; only redirect here for other sign-outs (expiry, other tab).
+            if (appBooted && !isSignOutInProgress()) {
                 appBooted = false;
                 setTimeout(() => location.replace('/'), 0);
             }

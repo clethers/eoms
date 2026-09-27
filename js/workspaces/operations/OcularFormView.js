@@ -3,7 +3,7 @@ import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { initSignaturePad } from '../../shared/signaturePad.js';
 import { getItemsByCategory } from '../../services/masterDataService.js';
 import { navigateTo } from '../../components/Router.js';
-import { updateLeadStageByOcularId } from '../../services/dataService.js';
+import { localDateTimeInputValue } from '../../shared/dateFormat.js';
 
 export default class OcularFormView {
     constructor() {
@@ -75,8 +75,16 @@ export default class OcularFormView {
         if (prevBtn) prevBtn.addEventListener('click', () => { this.saveData(); this.step--; this.renderStep(); });
         
         const nextBtn = this.container.querySelector('#next-btn');
-        if (nextBtn) nextBtn.addEventListener('click', () => { 
-            this.saveData(); 
+        if (nextBtn) nextBtn.addEventListener('click', () => {
+            this.saveData();
+            // Validate only the fields of the current step before advancing
+            const fields = this.container.querySelectorAll('input, select, textarea');
+            for (const field of fields) {
+                if (!field.checkValidity()) {
+                    field.reportValidity();
+                    return;
+                }
+            }
             // NEMA 3R gate logic for step 2
             if (this.step === 1 && !this.formData.hasNema3r) {
                 this.showNema3rModal(false);
@@ -111,7 +119,25 @@ export default class OcularFormView {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             this.saveData();
-            
+
+            const missing = [];
+            const requiredPhotos = {
+                proposed_layout: 'Proposed Layout photo',
+                tapping_point: 'Tapping Point photo',
+                wiring_conduit: 'Wiring/Conduit Layout photo',
+                ev_charging_location: 'EV Charging Location photo'
+            };
+            const photos = this.formData.photoAttachments || {};
+            for (const [key, label] of Object.entries(requiredPhotos)) {
+                if (!photos[key]) missing.push(label);
+            }
+            if (!this.inspectorPad || this.inspectorPad.isEmpty()) missing.push('Inspector signature');
+            if (!this.witnessPad || this.witnessPad.isEmpty()) missing.push('Witness signature');
+            if (missing.length) {
+                alert('Cannot submit yet. Missing:\n- ' + missing.join('\n- '));
+                return;
+            }
+
             if (this.inspectorPad) this.formData.inspectorSigImg = this.inspectorPad.getDataUrl();
             if (this.witnessPad) this.formData.witnessSigImg = this.witnessPad.getDataUrl();
             
@@ -133,11 +159,7 @@ export default class OcularFormView {
                 alert('Error submitting inspection: ' + (err && err.message ? err.message : err));
                 return;
             }
-            if (this.formData.id) {
-                try {
-                    await updateLeadStageByOcularId(this.formData.id, 'SITE_VISIT_COMPLETED');
-                } catch(e) { console.error('Failed to auto-update lead stage:', e); }
-            }
+            // Lead moves to SITE_VISIT_COMPLETED only when QA approves (QAReviewQueueView).
             alert('Inspection submitted for approval!');
             sessionStorage.removeItem('currentOcularDraftId');
             navigateTo('/ocular');
@@ -195,7 +217,7 @@ export default class OcularFormView {
                 this.formData[input.name] = input.value;
             }
         });
-        if (!this.formData.dateTime) this.formData.dateTime = new Date().toISOString().slice(0, 16);
+        if (!this.formData.dateTime) this.formData.dateTime = localDateTimeInputValue();
         if (!this.formData.timeStart) this.formData.timeStart = new Date().toISOString();
     }
 

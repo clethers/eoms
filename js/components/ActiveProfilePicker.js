@@ -65,20 +65,37 @@ export function clearActiveProfile() {
 }
 
 /**
- * Signs out. If the server call fails (e.g. no network) the local session
- * would survive, so drop the stored supabase token manually as a fallback.
+ * True while the Sign out button is waiting for supabase.auth.signOut(). The
+ * SIGNED_OUT listener in main.js skips its own redirect while this is set so
+ * the POST /auth/v1/logout isn't aborted by a page navigation.
+ */
+let signOutInProgress = false;
+export function isSignOutInProgress() {
+    return signOutInProgress;
+}
+
+const withTimeout = (promise, ms) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+]);
+
+/**
+ * Signs out. If the server call fails or takes longer than 3s (e.g. no
+ * network) the local session would survive, so drop the stored supabase
+ * token manually as a fallback.
  */
 export async function signOutEverywhereLocal() {
+    signOutInProgress = true;
     let failed = false;
     try {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await withTimeout(supabase.auth.signOut(), 3000);
         if (error) failed = true;
     } catch (err) {
         failed = true;
     }
     if (failed) {
         try {
-            await supabase.auth.signOut({ scope: 'local' });
+            await withTimeout(supabase.auth.signOut({ scope: 'local' }), 1000);
         } catch (_) { /* ignore */ }
         try {
             Object.keys(localStorage)
@@ -87,6 +104,8 @@ export async function signOutEverywhereLocal() {
         } catch (_) { /* ignore */ }
     }
     clearActiveProfile();
+    // SIGNED_OUT has already been emitted (or skipped) by now; callers redirect.
+    signOutInProgress = false;
 }
 
 /** Renders "<name> · <role>" and a Sign out button into the header. */
@@ -113,9 +132,9 @@ export function renderProfilePicker(containerId) {
     btn.addEventListener('click', async () => {
         btn.disabled = true;
         btn.textContent = 'Signing out...';
+        // Wait for the server logout (max ~3s) before leaving the page; the
+        // SIGNED_OUT listener in main.js defers to this redirect.
         await signOutEverywhereLocal();
-        // SIGNED_OUT listener in main.js reloads to the login screen; this is a
-        // fallback in case the event didn't fire (e.g. network error on signOut).
         clearActiveProfile();
         location.replace('/');
     });

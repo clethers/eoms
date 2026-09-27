@@ -1,3 +1,4 @@
+import { formatDateTime } from '../../shared/dateFormat.js';
 import { fetchAllInstallations } from '../../services/dataService.js';
 import { escapeHTML } from '../../shared/security.js';
 import { printInstallationRegister } from '../../shared/certificates.js';
@@ -38,7 +39,7 @@ export default class InstallationsRegisterView {
                             <tr>
                                 <td>${escapeHTML(i.installationNo)}</td>
                                 <td>${escapeHTML(i.clientName)}</td>
-                                <td>${escapeHTML(i.dateTime || 'N/A')}</td>
+                                <td>${escapeHTML(formatDateTime(i.dateTime))}</td>
                                 <td>${escapeHTML(i.status)}</td>
                                 <td>
                                     <button class="print-btn" data-id="${i.id}">Print Register</button>
