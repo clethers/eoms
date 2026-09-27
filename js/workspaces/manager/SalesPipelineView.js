@@ -98,7 +98,7 @@ export default class SalesPipelineView {
                     createdBy: getActiveProfileId()
                 });
                 form.reset();
-                this.loadPipeline(container.querySelector('#pipeline-table-container'));
+                this.refreshLeads(container.querySelector('#pipeline-table-container'));
             } catch (err) {
                 alert('Error creating lead: ' + err.message);
             }
@@ -113,7 +113,7 @@ export default class SalesPipelineView {
                     { legacyRowId: 'MOCK3', name: 'Corp C', email: 'c@corp.com', phone: '09181112222', installationAddress: '789 High St', modeOfCommunication: 'Website', remarks: '', createdBy: getActiveProfileId(), stage: 'INITIAL_CONTACT', stageINITIAL_CONTACTAt: new Date().toISOString() }
                 ];
                 for (const r of rows) await createSalesLead(r);
-                this.loadPipeline(container.querySelector('#pipeline-table-container'));
+                this.refreshLeads(container.querySelector('#pipeline-table-container'));
             }
         });
 
@@ -126,12 +126,20 @@ export default class SalesPipelineView {
         return container;
     }
 
+    /** Refetch leads after a local change so the row updates now, keeping the loaded page count. */
+    refreshLeads(container) {
+        this.keepPage = this.currentPage;
+        this.allLeads = null;
+        return this.loadPipeline(container);
+    }
+
     async loadPipeline(container) {
         try {
             if (!this.allLeads) {
                 this.allLeads = await fetchAllSalesLeads();
                 this.allLeads.sort((a, b) => b.id - a.id);
-                this.currentPage = 1;
+                this.currentPage = this.keepPage || 1;
+                this.keepPage = null;
                 this.pageSize = 3; // Temporarily lowered so you can see it in action!
             }
 
@@ -210,6 +218,7 @@ export default class SalesPipelineView {
                     const newStage = e.target.value;
                     try {
                         await updateSalesLeadStage(id, newStage);
+                        this.refreshLeads(container);
                     } catch(err) {
                         alert('Error updating stage: ' + err.message);
                     }
@@ -402,7 +411,7 @@ export default class SalesPipelineView {
                             // In a real app we'd save the quote object here
                             await updateSalesLeadStage(id, 'QUOTE_SENT');
                             document.body.removeChild(modal);
-                            this.loadPipeline(container);
+                            this.refreshLeads(container);
                         } catch(err) {
                             alert('Error sending quote: ' + err.message);
                         }
@@ -494,7 +503,7 @@ export default class SalesPipelineView {
                             try {
                                 const { archiveSalesLead } = await import('../../services/dataService.js');
                                 await archiveSalesLead(id);
-                                this.loadPipeline(container);
+                                this.refreshLeads(container);
                             } catch(err) {
                                 alert('Error archiving lead: ' + err.message);
                             }
@@ -517,7 +526,7 @@ export default class SalesPipelineView {
                             const { updateSalesLeadInfo } = await import('../../services/dataService.js');
                             await updateSalesLeadInfo(id, updates);
                             document.body.removeChild(modal);
-                            this.loadPipeline(container);
+                            this.refreshLeads(container);
                         } catch(err) {
                             alert('Error updating CRM profile: ' + err.message);
                         }
@@ -579,7 +588,7 @@ export default class SalesPipelineView {
                         try {
                             await dispatchOcularFromLead(id, teamId, rnNo, scheduledDate);
                             alert('Inspection successfully scheduled and dispatched!');
-                            this.loadPipeline(container);
+                            this.refreshLeads(container);
                         } catch(err) {
                             alert('Error dispatching: ' + err.message);
                         }
@@ -642,7 +651,7 @@ export default class SalesPipelineView {
                             const { dispatchInstallationFromLead } = await import('../../services/dataService.js');
                             await dispatchInstallationFromLead(id, teamId, instNo, scheduledDate);
                             alert('Installation successfully scheduled and dispatched!');
-                            this.loadPipeline(container);
+                            this.refreshLeads(container);
                         } catch(err) {
                             alert('Error dispatching: ' + err.message);
                         }
@@ -656,7 +665,7 @@ export default class SalesPipelineView {
                     if (confirm('Archive this lead?')) {
                         try {
                             await archiveSalesLead(id);
-                            this.loadPipeline(container);
+                            this.refreshLeads(container);
                         } catch(err) {
                             alert('Error archiving lead: ' + err.message);
                         }
