@@ -30,3 +30,6 @@ mats/*.xlsx
 .env
 .env.*.local
 !.env.example
+
+# Client import SQL contains real personal data
+supabase/import_clients.sql
