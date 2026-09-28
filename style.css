@@ -914,3 +914,9 @@ li.is-done > .lead-timeline__tick { background: var(--brand-green, #16a34a); bor
   .lead-timeline--edit > li { grid-template-columns: minmax(0, 1fr) auto; }
   .lead-timeline--edit input[type="date"] { grid-column: 1 / -1; width: 100%; }
 }
+/* Clients table: keep inside the card — wrap row actions and long Client IDs instead of overflowing */
+.leads-table .table-actions { flex-wrap: wrap; gap: 0.35rem; }
+.leads-table td.lead-client-id { white-space: normal; overflow-wrap: anywhere; max-width: 9rem; }
+@media screen and (min-width: 641px) and (max-width: 1024px) {
+  .main-view .leads-table { display: table; white-space: normal; }
+}
