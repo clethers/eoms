@@ -190,6 +190,27 @@ export async function resolveSupportTicket(id, resolvedBy) {
 
 // -- Sales Leads --
 
+// Stage progress checklist (lead.stageChecklist): { [code]: { done, date: 'YYYY-MM-DD' | null } }
+export const CHECKLIST_STAGES = [
+  'INITIAL_CONTACT', 'SITE_VISIT_SCHEDULED', 'SITE_VISIT_COMPLETED', 'QUOTE_SENT',
+  'QUOTE_ACCEPTED', 'INSTALLATION_SCHEDULED', 'INSTALLATION_COMPLETE', 'JOB_CHECKOUT_COMPLETE'
+];
+
+/** Today's date in Manila as YYYY-MM-DD. */
+export function manilaToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+/** When the app moves a lead to `code`, tick that checklist step (keeps an existing date). */
+function markChecklistDone(lead, code) {
+  if (!CHECKLIST_STAGES.includes(code)) return;
+  const cl = (lead.stageChecklist && typeof lead.stageChecklist === 'object') ? { ...lead.stageChecklist } : {};
+  const cur = cl[code];
+  if (cur && cur.done) return;
+  cl[code] = { done: true, date: (cur && cur.date) || manilaToday() };
+  lead.stageChecklist = cl;
+}
+
 export async function fetchAllSalesLeads() {
   return getAll(COLLECTIONS.SALES_LEADS, item => !item.deletedAt);
 }
@@ -197,6 +218,7 @@ export async function fetchAllSalesLeads() {
 export async function createSalesLead(leadData) {
   leadData.stage = 'INITIAL_CONTACT';
   leadData.stageINITIAL_CONTACTAt = new Date().toISOString();
+  markChecklistDone(leadData, 'INITIAL_CONTACT');
   return put(COLLECTIONS.SALES_LEADS, leadData);
 }
 
@@ -207,6 +229,7 @@ export async function updateSalesLeadStage(id, stage) {
   const oldStage = lead.stage;
   lead.stage = stage;
   lead[`stage${stage}At`] = new Date().toISOString();
+  markChecklistDone(lead, stage);
   
   const profileId = getActiveProfileId();
   let email = 'System', role = 'System';
@@ -277,6 +300,7 @@ export async function updateLeadStageByOcularId(ocularId, newStage) {
       const oldStage = lead.stage;
       lead.stage = newStage;
       lead[`stage${newStage}At`] = new Date().toISOString();
+      markChecklistDone(lead, newStage);
       
       const profileId = getActiveProfileId();
       let email = 'System', role = 'System';
@@ -317,7 +341,7 @@ export async function dispatchOcularFromLead(leadId, teamId, rnNo, scheduledDate
 
   const inspectionData = {
     clientName: lead.name,
-    contactNo: lead.contactInfo,
+    contactNo: lead.contactInfo || lead.phone || lead.email || '',
     locationAddress: lead.installationAddress,
     rnNo: rnNo,
     scopeOfWorks: 'Site Inspection',
@@ -332,6 +356,7 @@ export async function dispatchOcularFromLead(leadId, teamId, rnNo, scheduledDate
   lead.ocularId = savedInspection.id;
   lead.stage = 'SITE_VISIT_SCHEDULED';
   lead['stageSITE_VISIT_SCHEDULEDAt'] = new Date().toISOString();
+  markChecklistDone(lead, 'SITE_VISIT_SCHEDULED');
   await put(COLLECTIONS.SALES_LEADS, lead);
 
   await createNotification(teamId, `New inspection assigned: ${rnNo} – ${lead.name}`, '/ocular/assigned');
@@ -359,6 +384,7 @@ export async function dispatchInstallationFromLead(leadId, teamId, installationN
   lead.installationId = savedInstallation.id;
   lead.stage = 'INSTALLATION_SCHEDULED';
   lead['stageINSTALLATION_SCHEDULEDAt'] = new Date().toISOString();
+  markChecklistDone(lead, 'INSTALLATION_SCHEDULED');
   await put(COLLECTIONS.SALES_LEADS, lead);
 
   await createNotification(teamId, `New installation assigned: ${installationNo} – ${lead.name}`, '/ocular/ready');

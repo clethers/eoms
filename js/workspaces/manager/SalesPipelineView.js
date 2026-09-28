@@ -1,5 +1,5 @@
 import { liveRefresh } from '../../services/realtime.js';
-import { fetchAllSalesLeads, createSalesLead, updateSalesLeadStage, bulkImportSalesLeads, archiveSalesLead, dispatchOcularFromLead } from '../../services/dataService.js';
+import { fetchAllSalesLeads, createSalesLead, updateSalesLeadStage, bulkImportSalesLeads, archiveSalesLead, dispatchOcularFromLead, CHECKLIST_STAGES } from '../../services/dataService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
@@ -25,6 +25,70 @@ async function buildCrewSelectHtml(selectId) {
     </select>`;
 }
 
+// Checklist steps whose Excel date is a *scheduled* date rather than a completion date.
+const SCHEDULED_STEPS = new Set(['SITE_VISIT_COMPLETED', 'INSTALLATION_SCHEDULED']);
+const MODE_SUGGESTIONS = ['Call', 'Text', 'Viber', 'Email', 'Messenger', 'Website', 'Walk-in'];
+const modeDatalist = (id) => `<datalist id="${id}">${MODE_SUGGESTIONS.map(m => `<option value="${m}"></option>`).join('')}</datalist>`;
+
+const leadName = (l) => l.name || [l.firstName, l.lastName].filter(Boolean).join(' ');
+const fullName = (first, last) => [first, last].map(v => String(v || '').trim()).filter(Boolean).join(' ');
+
+/** Escape text, then turn http(s) URLs into links that open in a new tab. */
+function linkify(text) {
+    return escapeHTML(text || '').replace(/https?:\/\/[^\s<]+/g, (m) => {
+        const trail = (m.match(/[.,;:!?)\]]+$/) || [''])[0];
+        const url = trail ? m.slice(0, -trail.length) : m;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${trail}`;
+    });
+}
+
+function checklistOf(l) {
+    return (l.stageChecklist && typeof l.stageChecklist === 'object') ? l.stageChecklist : {};
+}
+
+/** Read-only progress timeline for the details panel. */
+function timelineHtml(l) {
+    const cl = checklistOf(l);
+    return `<ol class="lead-timeline">${CHECKLIST_STAGES.map(code => {
+        const st = cl[code] || {};
+        const word = SCHEDULED_STEPS.has(code) ? 'Scheduled' : 'Done';
+        return `<li class="${st.done ? 'is-done' : ''}${code === l.stage ? ' is-current' : ''}" data-step="${code}">
+            <span class="lead-timeline__tick" aria-hidden="true">${st.done ? '&#10003;' : ''}</span>
+            <span class="lead-timeline__label">${escapeHTML(formatStatus(code))}</span>
+            <span class="lead-timeline__date">${st.date ? `${word}: ${escapeHTML(st.date)}` : (st.done ? word : '—')}</span>
+        </li>`;
+    }).join('')}</ol>`;
+}
+
+function detailsHtml(l, colspan, open) {
+    const item = (label, val) => `<div class="lead-detail"><div class="lead-detail__k">${label}</div><div class="lead-detail__v">${val || '—'}</div></div>`;
+    const created = l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: 'short', day: 'numeric' }) : '';
+    return `<tr class="lead-details" data-for="${l.id}" ${open ? '' : 'hidden'}><td colspan="${colspan}">
+        <div class="lead-details__grid">
+            ${item('RN No.', escapeHTML(l.rnNo))}
+            ${item('Email', escapeHTML(l.email))}
+            ${item('Installation Address', escapeHTML(l.installationAddress))}
+            ${item('Mode of Communication', escapeHTML(l.modeOfCommunication))}
+            ${item('Building Type', escapeHTML(l.buildingType))}
+            ${item('Dispatch', l.ocularId ? 'Dispatched' : 'Pending')}
+            ${item('Created', escapeHTML(created))}
+        </div>
+        <div class="lead-details__section"><div class="lead-detail__k">Progress</div>${timelineHtml(l)}</div>
+        <div class="lead-details__grid">
+            ${item('Remarks', linkify(l.remarks) && `<div class="lead-remarks">${linkify(l.remarks)}</div>`)}
+            ${item('Follow-up 1', linkify(l.followUp1) && `<div class="lead-remarks">${linkify(l.followUp1)}</div>`)}
+            ${item('Follow-up 2', linkify(l.followUp2) && `<div class="lead-remarks">${linkify(l.followUp2)}</div>`)}
+        </div>
+        <div class="modal-actions"><button type="button" class="details-edit-btn btn-sm" data-id="${l.id}">${btnContent('pencil', 'Edit')}</button></div>
+    </td></tr>`;
+}
+
+function leadMatches(l, q) {
+    if (!q) return true;
+    return [leadName(l), l.clientId, l.rnNo, l.phone, l.email, l.contactInfo, l.installationAddress]
+        .some(v => v && String(v).toLowerCase().includes(q));
+}
+
 export const STAGES = [
     'INITIAL_CONTACT',
     'SITE_VISIT_SCHEDULED',
@@ -48,16 +112,33 @@ export default class SalesPipelineView {
                 <h3>Add New Lead</h3>
                 <form id="add-lead-form" class="form-row">
                     <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" name="name" required>
+                        <label>First Name</label>
+                        <input type="text" name="firstName" required>
                     </div>
                     <div class="form-group">
-                        <label>Email</label>
+                        <label>Last Name</label>
+                        <input type="text" name="lastName">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Number</label>
+                        <input type="text" name="phone" inputmode="tel">
+                    </div>
+                    <div class="form-group">
+                        <label>Email (optional)</label>
                         <input type="email" name="email">
                     </div>
                     <div class="form-group">
-                        <label>Phone</label>
-                        <input type="tel" name="phone">
+                        <label>Mode of Communication</label>
+                        <input type="text" name="modeOfCommunication" list="add-lead-modes" autocomplete="off">
+                        ${modeDatalist('add-lead-modes')}
+                    </div>
+                    <div class="form-group">
+                        <label>Client ID (optional)</label>
+                        <input type="text" name="clientId">
+                    </div>
+                    <div class="form-group">
+                        <label>RN No. (optional)</label>
+                        <input type="text" name="rnNo">
                     </div>
                     <div class="form-row-end">
                         <div class="form-group">
@@ -68,6 +149,12 @@ export default class SalesPipelineView {
                         <button type="button" id="bulk-import-btn" style="background-color: #64748b; color: white;">${btnContent('upload', 'Bulk Import (Mock)')}</button>
                     </div>
                 </form>
+            </div>
+            <div class="form-row" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="lead-search">Search clients</label>
+                    <input type="search" id="lead-search" placeholder="Name, Client ID, RN No., phone or email">
+                </div>
             </div>
             <div id="pipeline-table-container">
                 <div class="skeleton skeleton-title"></div>
@@ -88,13 +175,22 @@ export default class SalesPipelineView {
             e.preventDefault();
             const formData = new FormData(form);
             try {
+                const val = (k) => String(formData.get(k) || '').trim();
+                const phone = val('phone'), email = val('email');
                 await createSalesLead({
-                    name: formData.get('name'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone'),
-                    installationAddress: formData.get('installationAddress'),
-                    modeOfCommunication: 'Email',
+                    clientId: val('clientId'),
+                    rnNo: val('rnNo'),
+                    firstName: val('firstName'),
+                    lastName: val('lastName'),
+                    name: fullName(val('firstName'), val('lastName')),
+                    email,
+                    phone,
+                    contactInfo: phone || email,
+                    installationAddress: val('installationAddress'),
+                    modeOfCommunication: val('modeOfCommunication'),
                     remarks: '',
+                    followUp1: '',
+                    followUp2: '',
                     createdBy: getActiveProfileId()
                 });
                 form.reset();
@@ -117,6 +213,14 @@ export default class SalesPipelineView {
             }
         });
 
+        this.searchQuery = '';
+        this.openDetails = new Set(); // lead ids whose Details row is expanded (survives re-render)
+        container.querySelector('#lead-search').addEventListener('input', (e) => {
+            this.searchQuery = e.target.value.trim().toLowerCase();
+            this.currentPage = 1;
+            this.loadPipeline(container.querySelector('#pipeline-table-container'));
+        });
+
         this.loadPipeline(container.querySelector('#pipeline-table-container'));
         liveRefresh('mgr-pipeline', ['sales_leads'], container, () => {
             this.allLeads = null; // force refetch
@@ -131,6 +235,160 @@ export default class SalesPipelineView {
         this.keepPage = this.currentPage;
         this.allLeads = null;
         return this.loadPipeline(container);
+    }
+
+    /** CRM Profile modal: view/edit every Excel field plus the progress checklist. */
+    openProfile(id, container) {
+        const lead = (this.allLeads || []).find(l => l.id === id);
+        if (!lead) return;
+
+        // Old leads only have `name`: prefill first/last by splitting on the first space (saved only on Save).
+        let firstName = lead.firstName || '', lastName = lead.lastName || '';
+        if (!firstName && !lastName && lead.name) {
+            const n = String(lead.name).trim();
+            const i = n.indexOf(' ');
+            firstName = i > 0 ? n.slice(0, i) : n;
+            lastName = i > 0 ? n.slice(i + 1).trim() : '';
+        }
+        const cl = checklistOf(lead);
+        const val = (v) => escapeHTML(v == null ? '' : v);
+
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+
+        modal.innerHTML = `
+            <div style="background: white; padding: 2rem; border-radius: 8px; width: 640px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+                <div class="page-header" style="margin-bottom: 1.5rem;">
+                    <h3>CRM Profile: ${escapeHTML(leadName(lead))}</h3>
+                    <span style="background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(lead.stage))}</span>
+                </div>
+
+                <form id="crm-profile-form" class="form-stack" novalidate>
+                    <h4 class="crm-section-title">Client</h4>
+                    <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem;">
+                        <div class="form-group"><label>Client ID</label><input type="text" name="clientId" value="${val(lead.clientId)}"></div>
+                        <div class="form-group"><label>RN No.</label><input type="text" name="rnNo" value="${val(lead.rnNo)}"></div>
+                        <div class="form-group"><label>First Name</label><input type="text" name="firstName" value="${val(firstName)}"></div>
+                        <div class="form-group"><label>Last Name</label><input type="text" name="lastName" value="${val(lastName)}"></div>
+                        <div class="form-group"><label>Contact Number</label><input type="text" name="phone" inputmode="tel" value="${val(lead.phone)}"></div>
+                        <div class="form-group"><label>Email</label><input type="email" name="email" value="${val(lead.email)}"></div>
+                        <div class="form-group">
+                            <label>Mode of Communication</label>
+                            <input type="text" name="modeOfCommunication" list="crm-modes" autocomplete="off" value="${val(lead.modeOfCommunication)}">
+                            ${modeDatalist('crm-modes')}
+                        </div>
+                        <div class="form-group">
+                            <label>Building Type</label>
+                            <select name="buildingType">
+                                <option value="">-- Select --</option>
+                                ${['Residential', 'Commercial', 'Industrial'].map(b => `<option value="${b}" ${lead.buildingType === b ? 'selected' : ''}>${b}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;"><label>Installation Address</label><input type="text" name="installationAddress" value="${val(lead.installationAddress)}"></div>
+                    </div>
+
+                    <h4 class="crm-section-title">Progress</h4>
+                    <ol class="lead-timeline lead-timeline--edit">
+                        ${CHECKLIST_STAGES.map(code => {
+                            const st = cl[code] || {};
+                            const word = SCHEDULED_STEPS.has(code) ? 'Scheduled' : 'Done';
+                            return `<li class="${st.done ? 'is-done' : ''}${code === lead.stage ? ' is-current' : ''}" data-step="${code}">
+                                <label class="lead-timeline__label"><input type="checkbox" name="cl_done_${code}" ${st.done ? 'checked' : ''}> ${escapeHTML(formatStatus(code))}</label>
+                                <span class="lead-timeline__word">${word}</span>
+                                <input type="date" name="cl_date_${code}" value="${val(st.date)}" aria-label="${escapeHTML(formatStatus(code))} ${word.toLowerCase()} date">
+                            </li>`;
+                        }).join('')}
+                    </ol>
+
+                    <h4 class="crm-section-title">Notes</h4>
+                    ${lead.remarks ? `<div class="lead-remarks crm-remarks-view">${linkify(lead.remarks)}</div>` : ''}
+                    <div class="form-group">
+                        <label>Remarks</label>
+                        <textarea name="remarks" rows="3" placeholder="Add internal notes here...">${val(lead.remarks)}</textarea>
+                    </div>
+                    <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem;">
+                        <div class="form-group"><label>Follow-up 1</label><textarea name="followUp1" rows="2">${val(lead.followUp1)}</textarea></div>
+                        <div class="form-group"><label>Follow-up 2</label><textarea name="followUp2" rows="2">${val(lead.followUp2)}</textarea></div>
+                    </div>
+
+                    <div class="modal-actions modal-actions--split" style="margin-top: 0.5rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                        <button type="button" id="crm-archive-btn" style="background: #ef4444; color: white;">${btnContent('archive', 'Archive Lead')}</button>
+                        <div>
+                            <button type="button" id="crm-close-btn" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Close')}</button>
+                            <button type="submit" style="background: var(--brand-green); color: white;">${btnContent('save', 'Save Changes')}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.querySelector('#crm-close-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+
+        modal.querySelector('#crm-archive-btn').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to archive this lead?')) {
+                document.body.removeChild(modal);
+                try {
+                    const { archiveSalesLead } = await import('../../services/dataService.js');
+                    await archiveSalesLead(id);
+                    this.refreshLeads(container);
+                } catch(err) {
+                    alert('Error archiving lead: ' + err.message);
+                }
+            }
+        });
+
+        modal.querySelector('#crm-profile-form').addEventListener('submit', async (e2) => {
+            e2.preventDefault();
+            const form = e2.target;
+            const formData = new FormData(form);
+            const v = (k) => String(formData.get(k) || '').trim();
+            const first = v('firstName'), last = v('lastName');
+            const name = fullName(first, last) || lead.name || '';
+            if (!name) { alert('Please enter a first or last name.'); return; }
+            const email = v('email');
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Please enter a valid email address, or leave it empty.'); return; }
+            const phone = v('phone');
+
+            const stageChecklist = { ...cl };
+            for (const code of CHECKLIST_STAGES) {
+                const done = !!form.querySelector(`[name="cl_done_${code}"]`).checked;
+                const date = v(`cl_date_${code}`) || null;
+                if (done || date || stageChecklist[code]) stageChecklist[code] = { done, date };
+            }
+
+            const updates = {
+                clientId: v('clientId'),
+                rnNo: v('rnNo'),
+                firstName: first,
+                lastName: last,
+                name,
+                phone,
+                email,
+                contactInfo: phone || email,
+                modeOfCommunication: v('modeOfCommunication'),
+                buildingType: formData.get('buildingType'),
+                installationAddress: v('installationAddress'),
+                stageChecklist,
+                remarks: formData.get('remarks') || '',
+                followUp1: formData.get('followUp1') || '',
+                followUp2: formData.get('followUp2') || ''
+            };
+            try {
+                const { updateSalesLeadInfo } = await import('../../services/dataService.js');
+                await updateSalesLeadInfo(id, updates);
+                document.body.removeChild(modal);
+                this.refreshLeads(container);
+            } catch(err) {
+                alert('Error updating CRM profile: ' + err.message);
+            }
+        });
     }
 
     async loadPipeline(container) {
@@ -148,19 +406,26 @@ export default class SalesPipelineView {
                 return;
             }
 
-            const leadsToRender = this.allLeads.slice(0, this.currentPage * this.pageSize);
-            const hasMore = leadsToRender.length < this.allLeads.length;
+            const q = this.searchQuery || '';
+            const filtered = q ? this.allLeads.filter(l => leadMatches(l, q)) : this.allLeads;
+            if (filtered.length === 0) {
+                container.innerHTML = '<p>No clients match your search.</p>';
+                return;
+            }
+            const leadsToRender = filtered.slice(0, this.currentPage * this.pageSize);
+            const hasMore = leadsToRender.length < filtered.length;
+            const openSet = this.openDetails || (this.openDetails = new Set());
+            const COLS = 5;
 
             container.innerHTML = `
-                <table style="width: 100%; text-align: left;">
-                    <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th><th>Stage</th><th>Dispatch Status</th><th>Actions</th></tr></thead>
+                <table class="leads-table" style="width: 100%; text-align: left;">
+                    <thead><tr><th>Client ID</th><th>Name</th><th>Contact Number</th><th>Stage</th><th>Actions</th></tr></thead>
                     <tbody>
                         ${leadsToRender.map(l => `
-                            <tr>
-                                <td>${escapeHTML(l.name)}</td>
-                                <td>${escapeHTML(l.email || l.contactInfo || '')}</td>
-                                <td>${escapeHTML(l.phone || '')}</td>
-                                <td>${escapeHTML(l.installationAddress)}</td>
+                            <tr class="lead-row" data-id="${l.id}">
+                                <td class="lead-client-id">${escapeHTML(l.clientId || '')}</td>
+                                <td>${escapeHTML(leadName(l))}</td>
+                                <td>${escapeHTML(l.phone || l.contactInfo || '')}</td>
                                 <td>
                                     <select class="stage-select" data-id="${l.id}">
                                         ${!l.stage ? `<option value="" selected>— Set status —</option>` : ''}
@@ -168,12 +433,8 @@ export default class SalesPipelineView {
                                     </select>
                                 </td>
                                 <td>
-                                    ${l.ocularId 
-                                        ? `<span style="background: #d1fae5; color: #065f46; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">Dispatched</span>` 
-                                        : `<span style="background: #fef3c7; color: #92400e; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">Pending</span>`}
-                                </td>
-                                <td>
                                     <div class="table-actions">
+                                    <button type="button" class="details-btn btn-sm" data-id="${l.id}" title="Show details" aria-label="Details" aria-expanded="${openSet.has(l.id)}" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${btnContent(openSet.has(l.id) ? 'chevron-up' : 'chevron-down', 'Details')}</button>
                                     <button class="profile-btn btn-sm" data-id="${l.id}" title="View CRM Profile" aria-label="Profile" style="background-color: #6366f1; color: white;">${btnContent('user', 'Profile')}</button>
                                     ${l.ocularId ? `<button class="view-reports-btn btn-sm" data-id="${l.id}" title="View Project Reports" aria-label="Reports" style="background-color: #f59e0b; color: white;">${btnContent('clipboard-list', 'Reports')}</button>` : ''}
                                     ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Ocular" aria-label="Dispatch" style="background-color: var(--brand-green); color: white;">${btnContent('truck', 'Dispatch')}</button>` : ''}
@@ -182,6 +443,7 @@ export default class SalesPipelineView {
                                     </div>
                                 </td>
                             </tr>
+                            ${detailsHtml(l, COLS, openSet.has(l.id))}
                         `).join('')}
                     </tbody>
                 </table>
@@ -225,6 +487,24 @@ export default class SalesPipelineView {
                         alert('Error updating stage: ' + err.message);
                     }
                 });
+            });
+
+            // Details: expand/collapse in place (no refetch); open ids are kept for re-renders.
+            container.querySelectorAll('.details-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const b = e.currentTarget;
+                    const id = parseInt(b.dataset.id, 10);
+                    const row = container.querySelector(`tr.lead-details[data-for="${id}"]`);
+                    if (!row) return;
+                    const open = row.hidden;
+                    row.hidden = !open;
+                    if (open) this.openDetails.add(id); else this.openDetails.delete(id);
+                    b.setAttribute('aria-expanded', String(open));
+                    b.innerHTML = btnContent(open ? 'chevron-up' : 'chevron-down', 'Details');
+                });
+            });
+            container.querySelectorAll('.details-edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => this.openProfile(parseInt(e.currentTarget.dataset.id, 10), container));
             });
 
             container.querySelectorAll('.view-reports-btn').forEach(btn => {
@@ -422,118 +702,7 @@ export default class SalesPipelineView {
             });
 
             container.querySelectorAll('.profile-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = parseInt(e.target.dataset.id, 10);
-                    const lead = this.allLeads.find(l => l.id === id);
-                    if (!lead) return;
-
-                    const modal = document.createElement('div');
-                    modal.style.position = 'fixed';
-                    modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
-                    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                    modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
-                    modal.style.zIndex = '1000';
-                    
-                    modal.innerHTML = `
-                        <div style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
-                            <div class="page-header" style="margin-bottom: 1.5rem;">
-                                <h3>CRM Profile: ${escapeHTML(lead.name)}</h3>
-                                <span style="background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(lead.stage))}</span>
-                            </div>
-                            
-                            <form id="crm-profile-form" class="form-stack">
-                                <div class="form-group">
-                                    <label>Client / Company Name</label>
-                                    <input type="text" name="name" value="${escapeHTML(lead.name)}" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Email</label>
-                                    <input type="email" name="email" value="${escapeHTML(lead.email || lead.contactInfo || '')}">
-                                </div>
-                                <div class="form-group">
-                                    <label>Phone Number</label>
-                                    <input type="tel" name="phone" value="${escapeHTML(lead.phone || '')}">
-                                </div>
-                                <div class="form-group">
-                                    <label>Installation Address</label>
-                                    <input type="text" name="installationAddress" value="${escapeHTML(lead.installationAddress)}" required>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Mode of Communication</label>
-                                        <select name="modeOfCommunication">
-                                            <option value="Phone" ${lead.modeOfCommunication === 'Phone' ? 'selected' : ''}>Phone</option>
-                                            <option value="Email" ${lead.modeOfCommunication === 'Email' ? 'selected' : ''}>Email</option>
-                                            <option value="Website" ${lead.modeOfCommunication === 'Website' ? 'selected' : ''}>Website</option>
-                                            <option value="In-Person" ${lead.modeOfCommunication === 'In-Person' ? 'selected' : ''}>In-Person</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Building Type</label>
-                                        <select name="buildingType">
-                                            <option value="">-- Select --</option>
-                                            <option value="Residential" ${lead.buildingType === 'Residential' ? 'selected' : ''}>Residential</option>
-                                            <option value="Commercial" ${lead.buildingType === 'Commercial' ? 'selected' : ''}>Commercial</option>
-                                            <option value="Industrial" ${lead.buildingType === 'Industrial' ? 'selected' : ''}>Industrial</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>CRM Notes & Remarks</label>
-                                    <textarea name="remarks" rows="4" placeholder="Add internal notes here...">${escapeHTML(lead.remarks || '')}</textarea>
-                                </div>
-                                
-                                <div class="modal-actions modal-actions--split" style="margin-top: 0.5rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-                                    <button type="button" id="crm-archive-btn" style="background: #ef4444; color: white;">${btnContent('archive', 'Archive Lead')}</button>
-                                    <div>
-                                        <button type="button" id="crm-close-btn" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Close')}</button>
-                                        <button type="submit" style="background: var(--brand-green); color: white;">${btnContent('save', 'Save Changes')}</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    `;
-                    document.body.appendChild(modal);
-                    
-                    modal.querySelector('#crm-close-btn').addEventListener('click', () => {
-                        document.body.removeChild(modal);
-                    });
-                    
-                    modal.querySelector('#crm-archive-btn').addEventListener('click', async () => {
-                        if (confirm('Are you sure you want to archive this lead?')) {
-                            document.body.removeChild(modal);
-                            try {
-                                const { archiveSalesLead } = await import('../../services/dataService.js');
-                                await archiveSalesLead(id);
-                                this.refreshLeads(container);
-                            } catch(err) {
-                                alert('Error archiving lead: ' + err.message);
-                            }
-                        }
-                    });
-
-                    modal.querySelector('#crm-profile-form').addEventListener('submit', async (e2) => {
-                        e2.preventDefault();
-                        const formData = new FormData(e2.target);
-                        const updates = {
-                            name: formData.get('name'),
-                            email: formData.get('email'),
-                            phone: formData.get('phone'),
-                            installationAddress: formData.get('installationAddress'),
-                            modeOfCommunication: formData.get('modeOfCommunication'),
-                            buildingType: formData.get('buildingType'),
-                            remarks: formData.get('remarks')
-                        };
-                        try {
-                            const { updateSalesLeadInfo } = await import('../../services/dataService.js');
-                            await updateSalesLeadInfo(id, updates);
-                            document.body.removeChild(modal);
-                            this.refreshLeads(container);
-                        } catch(err) {
-                            alert('Error updating CRM profile: ' + err.message);
-                        }
-                    });
-                });
+                btn.addEventListener('click', (e) => this.openProfile(parseInt(e.currentTarget.dataset.id, 10), container));
             });
 
             container.querySelectorAll('.dispatch-btn').forEach(btn => {

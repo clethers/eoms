@@ -31,6 +31,8 @@ const PATHS = {
     'unlock': '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
     'lock': '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
     'filter': '<path d="M22 3H2l8 9.46V19l4 2v-8.54Z"/>',
+    'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+    'chevron-up': '<path d="m18 15-6-6-6 6"/>',
     'chevrons-down': '<path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/>',
     'lifebuoy': '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="m4.93 4.93 4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M4.93 19.07l4.24-4.24"/>',
     'bell': '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',

@@ -882,3 +882,35 @@ button:has(> .ic) {
   }
 }
 /* ===== end icons ===== */
+
+/* ---- Clients: inline details row, progress timeline, CRM profile sections ---- */
+.leads-table .lead-client-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; white-space: nowrap; color: #475569; }
+.leads-table tr.lead-details > td { background: #f8fafc; white-space: normal; padding: 1rem; }
+.leads-table tr.lead-details[hidden] { display: none; }
+.lead-details__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; }
+.lead-details__section { margin-bottom: 0.75rem; }
+.lead-detail { min-width: 0; }
+.lead-detail__k { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b; margin-bottom: 0.2rem; }
+.lead-detail__v { overflow-wrap: anywhere; }
+.lead-remarks { white-space: pre-wrap; overflow-wrap: anywhere; }
+.lead-remarks a { color: #2563eb; text-decoration: underline; }
+.crm-remarks-view { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.9rem; }
+.crm-section-title { margin: 0.5rem 0 0; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
+.lead-timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.lead-timeline > li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: 0.3rem 0.5rem; border-radius: 6px; border-left: 3px solid #e2e8f0; }
+.lead-timeline > li.is-done { border-left-color: var(--brand-green, #16a34a); }
+.lead-timeline > li.is-current { background: #eef2ff; }
+.lead-timeline__tick { width: 1.2rem; height: 1.2rem; border-radius: 50%; border: 1.5px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+li.is-done > .lead-timeline__tick { background: var(--brand-green, #16a34a); border-color: var(--brand-green, #16a34a); color: #fff; }
+.lead-timeline__date { font-size: 0.85rem; color: #475569; white-space: nowrap; }
+.lead-timeline--edit > li { grid-template-columns: minmax(0, 1fr) auto 10rem; }
+.lead-timeline--edit .lead-timeline__label { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; }
+.lead-timeline--edit input[type="checkbox"] { width: auto; margin: 0; }
+.lead-timeline--edit input[type="date"] { margin: 0; height: var(--control-h-sm, 2rem); }
+.lead-timeline__word { font-size: 0.8rem; color: #64748b; }
+@media screen and (max-width: 640px) {
+  .lead-details__grid { grid-template-columns: minmax(0, 1fr); }
+  .leads-table tr.lead-details > td { max-width: calc(100vw - 2.5rem); }
+  .lead-timeline--edit > li { grid-template-columns: minmax(0, 1fr) auto; }
+  .lead-timeline--edit input[type="date"] { grid-column: 1 / -1; width: 100%; }
+}
