@@ -60,27 +60,31 @@ function timelineHtml(l) {
     }).join('')}</ol>`;
 }
 
-function detailsHtml(l, colspan, open) {
-    const item = (label, val) => `<div class="lead-detail"><div class="lead-detail__k">${label}</div><div class="lead-detail__v">${val || '—'}</div></div>`;
+function detailItem(label, val) {
+    return `<div class="lead-detail"><div class="lead-detail__k">${label}</div><div class="lead-detail__v">${val || '—'}</div></div>`;
+}
+
+/** Read-only Details modal body: same fields as the old inline details row. */
+function detailsModalHtml(l) {
     const created = l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: 'short', day: 'numeric' }) : '';
-    return `<tr class="lead-details" data-for="${l.id}" ${open ? '' : 'hidden'}><td colspan="${colspan}">
+    return `
         <div class="lead-details__grid">
-            ${item('RN No.', escapeHTML(l.rnNo))}
-            ${item('Email', escapeHTML(l.email))}
-            ${item('Installation Address', escapeHTML(l.installationAddress))}
-            ${item('Mode of Communication', escapeHTML(l.modeOfCommunication))}
-            ${item('Building Type', escapeHTML(l.buildingType))}
-            ${item('Dispatch', l.ocularId ? 'Dispatched' : 'Pending')}
-            ${item('Created', escapeHTML(created))}
+            ${detailItem('RN No.', escapeHTML(l.rnNo))}
+            ${detailItem('Contact Number', escapeHTML(l.phone || l.contactInfo))}
+            ${detailItem('Email', escapeHTML(l.email))}
+            ${detailItem('Installation Address', escapeHTML(l.installationAddress))}
+            ${detailItem('Mode of Communication', escapeHTML(l.modeOfCommunication))}
+            ${detailItem('Building Type', escapeHTML(l.buildingType))}
+            ${detailItem('Dispatch', l.ocularId ? 'Dispatched' : 'Pending')}
+            ${detailItem('Created', escapeHTML(created))}
         </div>
         <div class="lead-details__section"><div class="lead-detail__k">Progress</div>${timelineHtml(l)}</div>
         <div class="lead-details__grid">
-            ${item('Remarks', linkify(l.remarks) && `<div class="lead-remarks">${linkify(l.remarks)}</div>`)}
-            ${item('Follow-up 1', linkify(l.followUp1) && `<div class="lead-remarks">${linkify(l.followUp1)}</div>`)}
-            ${item('Follow-up 2', linkify(l.followUp2) && `<div class="lead-remarks">${linkify(l.followUp2)}</div>`)}
+            ${detailItem('Remarks', linkify(l.remarks) && `<div class="lead-remarks">${linkify(l.remarks)}</div>`)}
+            ${detailItem('Follow-up 1', linkify(l.followUp1) && `<div class="lead-remarks">${linkify(l.followUp1)}</div>`)}
+            ${detailItem('Follow-up 2', linkify(l.followUp2) && `<div class="lead-remarks">${linkify(l.followUp2)}</div>`)}
         </div>
-        <div class="modal-actions"><button type="button" class="details-edit-btn btn-sm" data-id="${l.id}">${btnContent('pencil', 'Edit')}</button></div>
-    </td></tr>`;
+    `;
 }
 
 function leadMatches(l, q) {
@@ -214,7 +218,6 @@ export default class SalesPipelineView {
         });
 
         this.searchQuery = '';
-        this.openDetails = new Set(); // lead ids whose Details row is expanded (survives re-render)
         container.querySelector('#lead-search').addEventListener('input', (e) => {
             this.searchQuery = e.target.value.trim().toLowerCase();
             this.currentPage = 1;
@@ -235,6 +238,77 @@ export default class SalesPipelineView {
         this.keepPage = this.currentPage;
         this.allLeads = null;
         return this.loadPipeline(container);
+    }
+
+    /** Read-only Details popup: client info, progress timeline and remarks. Edit hands off to the CRM Profile modal. */
+    openDetailsModal(id, container, triggerBtn) {
+        const lead = (this.allLeads || []).find(l => l.id === id);
+        if (!lead) return;
+
+        const titleId = `lead-details-title-${id}`;
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+
+        modal.innerHTML = `
+            <div role="dialog" aria-modal="true" aria-labelledby="${titleId}" tabindex="-1"
+                 style="background: white; padding: 2rem; border-radius: 8px; width: 640px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+                <div class="page-header" style="margin-bottom: 1.5rem;">
+                    <h3 id="${titleId}">${escapeHTML(lead.clientId || '')}${lead.clientId ? ' — ' : ''}${escapeHTML(leadName(lead))}</h3>
+                    <span style="background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${escapeHTML(formatStatus(lead.stage))}</span>
+                </div>
+                ${detailsModalHtml(lead)}
+                <div class="modal-actions">
+                    <button type="button" id="lead-details-edit-btn" class="btn-sm" style="background-color: #6366f1; color: white;">${btnContent('pencil', 'Edit')}</button>
+                    <button type="button" id="lead-details-close-btn" class="btn-sm" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Close')}</button>
+                </div>
+            </div>
+        `;
+
+        const dialog = modal.querySelector('[role="dialog"]');
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const closeModal = () => {
+            document.body.style.overflow = prevOverflow;
+            document.removeEventListener('keydown', onKeydown);
+            if (modal.parentNode) document.body.removeChild(modal);
+            if (triggerBtn && document.contains(triggerBtn)) triggerBtn.focus();
+        };
+        const onKeydown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeModal();
+                return;
+            }
+            if (e.key === 'Tab') {
+                const focusable = Array.from(dialog.querySelectorAll(focusableSelector));
+                if (focusable.length === 0) return;
+                const first = focusable[0], last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault(); last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault(); first.focus();
+                }
+            }
+        };
+        document.addEventListener('keydown', onKeydown);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        modal.querySelector('#lead-details-close-btn').addEventListener('click', closeModal);
+        modal.querySelector('#lead-details-edit-btn').addEventListener('click', () => {
+            closeModal();
+            this.openProfile(id, container);
+        });
+
+        document.body.appendChild(modal);
+        dialog.focus();
     }
 
     /** CRM Profile modal: view/edit every Excel field plus the progress checklist. */
@@ -414,8 +488,6 @@ export default class SalesPipelineView {
             }
             const leadsToRender = filtered.slice(0, this.currentPage * this.pageSize);
             const hasMore = leadsToRender.length < filtered.length;
-            const openSet = this.openDetails || (this.openDetails = new Set());
-            const COLS = 5;
 
             container.innerHTML = `
                 <table class="leads-table" style="width: 100%; text-align: left;">
@@ -434,7 +506,7 @@ export default class SalesPipelineView {
                                 </td>
                                 <td>
                                     <div class="table-actions">
-                                    <button type="button" class="details-btn btn-sm" data-id="${l.id}" title="Show details" aria-label="Details" aria-expanded="${openSet.has(l.id)}" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${btnContent(openSet.has(l.id) ? 'chevron-up' : 'chevron-down', 'Details')}</button>
+                                    <button type="button" class="details-btn btn-sm" data-id="${l.id}" title="Show details" aria-label="Details" aria-haspopup="dialog" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${btnContent('eye', 'Details')}</button>
                                     <button class="profile-btn btn-sm" data-id="${l.id}" title="View CRM Profile" aria-label="Profile" style="background-color: #6366f1; color: white;">${btnContent('user', 'Profile')}</button>
                                     ${l.ocularId ? `<button class="view-reports-btn btn-sm" data-id="${l.id}" title="View Project Reports" aria-label="Reports" style="background-color: #f59e0b; color: white;">${btnContent('clipboard-list', 'Reports')}</button>` : ''}
                                     ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Ocular" aria-label="Dispatch" style="background-color: var(--brand-green); color: white;">${btnContent('truck', 'Dispatch')}</button>` : ''}
@@ -443,7 +515,6 @@ export default class SalesPipelineView {
                                     </div>
                                 </td>
                             </tr>
-                            ${detailsHtml(l, COLS, openSet.has(l.id))}
                         `).join('')}
                     </tbody>
                 </table>
@@ -489,22 +560,13 @@ export default class SalesPipelineView {
                 });
             });
 
-            // Details: expand/collapse in place (no refetch); open ids are kept for re-renders.
+            // Details: read-only popup dialog (no re-fetch; edit continues into the CRM Profile modal).
             container.querySelectorAll('.details-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const b = e.currentTarget;
                     const id = parseInt(b.dataset.id, 10);
-                    const row = container.querySelector(`tr.lead-details[data-for="${id}"]`);
-                    if (!row) return;
-                    const open = row.hidden;
-                    row.hidden = !open;
-                    if (open) this.openDetails.add(id); else this.openDetails.delete(id);
-                    b.setAttribute('aria-expanded', String(open));
-                    b.innerHTML = btnContent(open ? 'chevron-up' : 'chevron-down', 'Details');
+                    this.openDetailsModal(id, container, b);
                 });
-            });
-            container.querySelectorAll('.details-edit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => this.openProfile(parseInt(e.currentTarget.dataset.id, 10), container));
             });
 
             container.querySelectorAll('.view-reports-btn').forEach(btn => {
