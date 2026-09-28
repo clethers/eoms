@@ -10,7 +10,7 @@ import { getActiveProfile } from '../components/ActiveProfilePicker.js';
 
 export default class ManagerWorkspace {
     async render(path) {
-        // Customer Care lands on Customers; other roles keep For Review as the /manager default.
+        // Customer Care lands on Clients; other roles keep For Review as the /manager default.
         if (path === '/manager' && getActiveProfile()?.role === 'customer_care_manager') {
             path = '/manager/pipeline';
             history.replaceState(null, null, path);
@@ -28,7 +28,7 @@ export default class ManagerWorkspace {
                     
                     <div class="sidebar-category">CRM & Business</div>
                     <a href="/manager/analytics" class="${path === '/manager/analytics' ? 'active' : ''}" data-link>Reports</a>
-                    <a href="/manager/pipeline" class="${path === '/manager/pipeline' ? 'active' : ''}" data-link>Customers</a>
+                    <a href="/manager/pipeline" class="${path === '/manager/pipeline' ? 'active' : ''}" data-link>Clients</a>
                     <a href="/manager/clientsearch" class="${path === '/manager/clientsearch' ? 'active' : ''}" data-link>Inspection Records</a>
                     
                     <div class="sidebar-category">Fulfillment & Support</div>

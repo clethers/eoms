@@ -74,7 +74,7 @@ export default class AnalyticsDashboardView {
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                     <div style="border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; background: white;">
-                        <h3 style="margin-top: 0; text-align: center;">Customers by Stage</h3>
+                        <h3 style="margin-top: 0; text-align: center;">Clients by Stage</h3>
                         <div style="position: relative; height: 300px; width: 100%;">
                             <canvas id="pipelineChart"></canvas>
                         </div>
