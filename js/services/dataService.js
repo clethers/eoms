@@ -227,7 +227,7 @@ export async function updateSalesLeadStage(id, stage) {
       severity: 'INFO',
       resourceType: 'LEAD',
       resourceId: id,
-      description: `Stage updated from ${oldStage} to ${stage}`
+      description: `Stage updated from ${oldStage || 'No status'} to ${stage}`
   });
   
   return put(COLLECTIONS.SALES_LEADS, lead);
@@ -296,7 +296,7 @@ export async function updateLeadStageByOcularId(ocularId, newStage) {
           severity: 'INFO',
           resourceType: 'LEAD',
           resourceId: lead.id,
-          description: `Auto-updated stage from ${oldStage} to ${newStage} via Operations`
+          description: `Auto-updated stage from ${oldStage || 'No status'} to ${newStage} via Operations`
       });
       
       return put(COLLECTIONS.SALES_LEADS, lead);

@@ -24,7 +24,7 @@ export const STATUS_LABELS = {
 };
 
 export function formatStatus(status) {
-    if (!status) return 'Unknown';
+    if (!status) return 'No status';
     if (STATUS_LABELS[status]) return STATUS_LABELS[status];
     // Unknown code: Title Case it rather than printing raw SHOUTY_SNAKE.
     return String(status).replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());

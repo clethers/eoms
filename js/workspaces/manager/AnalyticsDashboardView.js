@@ -40,7 +40,7 @@ export default class AnalyticsDashboardView {
             const completedInstalls = installs.filter(i => i.status === 'COMMISSIONED').length;
             
             // Win/Loss calculation
-            const wonLeads = leads.filter(l => l.stage === 'QUOTE_ACCEPTED' || l.stage.includes('INSTALLATION') || l.stage === 'JOB_CHECKOUT_COMPLETE').length;
+            const wonLeads = leads.filter(l => l.stage === 'QUOTE_ACCEPTED' || (l.stage && l.stage.includes('INSTALLATION')) || l.stage === 'JOB_CHECKOUT_COMPLETE').length;
             const lostLeads = leads.filter(l => l.stage === 'CANCELED').length;
             const winRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
 

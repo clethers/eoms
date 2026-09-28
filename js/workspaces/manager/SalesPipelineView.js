@@ -163,6 +163,7 @@ export default class SalesPipelineView {
                                 <td>${escapeHTML(l.installationAddress)}</td>
                                 <td>
                                     <select class="stage-select" data-id="${l.id}">
+                                        ${!l.stage ? `<option value="" selected>— Set status —</option>` : ''}
                                         ${STAGES.map(s => `<option value="${s}" ${s === l.stage ? 'selected' : ''}>${escapeHTML(formatStatus(s))}</option>`).join('')}
                                     </select>
                                 </td>
@@ -216,6 +217,7 @@ export default class SalesPipelineView {
                 sel.addEventListener('change', async (e) => {
                     const id = parseInt(e.target.dataset.id, 10);
                     const newStage = e.target.value;
+                    if (!newStage) return; // placeholder re-selected: no-op, don't save
                     try {
                         await updateSalesLeadStage(id, newStage);
                         this.refreshLeads(container);
