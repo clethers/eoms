@@ -669,7 +669,7 @@ export default class SalesPipelineView {
                                     <button type="button" class="details-btn btn-sm" data-id="${l.id}" title="Show details" aria-label="Details" aria-haspopup="dialog" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">${btnContent('eye', 'Details')}</button>
                                     <button class="profile-btn btn-sm" data-id="${l.id}" title="View CRM Profile" aria-label="Profile" style="background-color: #6366f1; color: white;">${btnContent('user', 'Profile')}</button>
                                     ${l.ocularId ? `<button class="view-reports-btn btn-sm" data-id="${l.id}" title="View Project Reports" aria-label="Reports" style="background-color: #f59e0b; color: white;">${btnContent('clipboard-list', 'Reports')}</button>` : ''}
-                                    ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Ocular" aria-label="Dispatch" style="background-color: var(--brand-green); color: white;">${btnContent('truck', 'Dispatch')}</button>` : ''}
+                                    ${!l.ocularId ? `<button class="dispatch-btn btn-sm" data-id="${l.id}" title="Dispatch Inspection" aria-label="Dispatch" style="background-color: var(--brand-green); color: white;">${btnContent('truck', 'Dispatch')}</button>` : ''}
                                     ${l.stage === 'SITE_VISIT_COMPLETED' ? `<button class="quote-btn btn-sm" data-id="${l.id}" title="Generate Quote" aria-label="Quote" style="background-color: #8b5cf6; color: white;">${btnContent('file-text', 'Quote')}</button>` : ''}
                                     ${l.ocularId && !l.installationId ? `<button class="dispatch-install-btn btn-sm" data-id="${l.id}" title="Dispatch Install" aria-label="Install">${btnContent('wrench', 'Install')}</button>` : ''}
                                     </div>
@@ -942,7 +942,7 @@ export default class SalesPipelineView {
                     
                     modal.innerHTML = `
                         <div style="background: white; padding: 2rem; border-radius: 8px; width: 400px;">
-                            <h3>Schedule & Dispatch Ocular</h3>
+                            <h3>Schedule & Dispatch Inspection</h3>
                             <div class="form-group">
                                 <label>RN Number</label>
                                 <input type="text" id="dispatch-rn" value="${escapeHTML(lead && lead.rnNo ? lead.rnNo : '')}">

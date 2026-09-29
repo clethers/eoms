@@ -20,9 +20,9 @@ export default class CalendarView {
             <div class="page-header">
                 <h2>Calendar</h2>
                 <div class="toolbar">
-                    <button id="prev-month" style="background: #e2e8f0;">${btnContent('chevron-left', 'Prev')}</button>
+                    <button type="button" id="prev-month" class="cal-nav-btn" aria-label="Previous month">${btnContent('chevron-left', 'Prev')}</button>
                     <span id="month-label" style="font-size: 1.2rem; font-weight: bold; min-width: 150px; text-align: center;"></span>
-                    <button id="next-month" style="background: #e2e8f0;">${btnContent('chevron-right', 'Next', true)}</button>
+                    <button type="button" id="next-month" class="cal-nav-btn" aria-label="Next month">${btnContent('chevron-right', 'Next', true)}</button>
                 </div>
             </div>
             <div id="calendar-container">Loading...</div>
@@ -96,8 +96,8 @@ export default class CalendarView {
 
             dayOculars.forEach(o => {
                 html += `
-                    <div class="calendar-event" data-type="ocular" data-id="${o.id}" style="cursor: pointer; background: #dbeafe; border-left: 3px solid #3b82f6; padding: 0.25rem 0.5rem; margin-bottom: 0.25rem; font-size: 0.75rem; border-radius: 2px; color: #1e3a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Ocular: ${escapeHTML(o.clientName)}">
-                        <strong>Ocular:</strong> ${escapeHTML(o.clientName)}
+                    <div class="calendar-event" data-type="ocular" data-id="${o.id}" style="cursor: pointer; background: #dbeafe; border-left: 3px solid #3b82f6; padding: 0.25rem 0.5rem; margin-bottom: 0.25rem; font-size: 0.75rem; border-radius: 2px; color: #1e3a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Inspection: ${escapeHTML(o.clientName)}">
+                        <strong>Inspection:</strong> ${escapeHTML(o.clientName)}
                     </div>`;
             });
             
@@ -145,7 +145,7 @@ export default class CalendarView {
         modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
         modal.style.zIndex = '2000';
         
-        const title = type === 'ocular' ? 'Ocular Inspection Details' : 'Installation Details';
+        const title = type === 'ocular' ? 'Inspection Details' : 'Installation Details';
         const refNo = type === 'ocular' ? event.rnNo : event.installationNo;
         const addr = type === 'ocular' ? event.locationAddress : event.installationAddress;
         

@@ -44,7 +44,7 @@ export default class InstallationFormView {
                 <div class="form-nav">
                     <div class="form-nav__start">
                         ${this.step > 1 ? `<button type="button" id="prev-btn">${btnContent('chevron-left', 'Previous')}</button>` : `<button type="button" id="cancel-btn">${btnContent('x', 'Cancel')}</button>`}
-                        <button type="button" id="preview-ocular-btn">${btnContent('eye', 'Preview Ocular Inspection')}</button>
+                        <button type="button" id="preview-ocular-btn">${btnContent('eye', 'Preview Inspection')}</button>
                     </div>
                     <div class="form-nav__end">
                         ${this.step < 4 ? `<button type="button" id="next-btn">${btnContent('chevron-right', 'Next', true)}</button>` : ''}
@@ -126,10 +126,10 @@ export default class InstallationFormView {
                 if (modal.style.display === 'none') {
                     modal.innerHTML = buildInspectionSummaryHtml(this.linkedOcular);
                     modal.style.display = 'block';
-                    setBtnLabel(previewBtn, 'Hide Ocular Preview');
+                    setBtnLabel(previewBtn, 'Hide Inspection Preview');
                 } else {
                     modal.style.display = 'none';
-                    setBtnLabel(previewBtn, 'Preview Ocular Inspection');
+                    setBtnLabel(previewBtn, 'Preview Inspection');
                 }
             });
         }

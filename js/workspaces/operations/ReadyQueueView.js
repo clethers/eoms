@@ -44,7 +44,7 @@ export default class ReadyQueueView {
                                     <td>${escapeHTML(i.scheduledDate ? new Date(i.scheduledDate).toLocaleString() : 'Not Scheduled')}</td>
                                     <td>
                                         <div class="table-actions">
-                                        <button class="btn-sm" data-action="preview" data-id="${i.id}" data-ocular="${i.ocularId}" title="View Ocular Summary" aria-label="View">${btnContent('eye', 'View')}</button>
+                                        <button class="btn-sm" data-action="preview" data-id="${i.id}" data-ocular="${i.ocularId}" title="View Inspection Summary" aria-label="View">${btnContent('eye', 'View')}</button>
                                         ${isLocked
                                             ? `<button disabled class="btn-sm" title="${lockReason}" style="background-color:#ccc; color:#666; cursor:not-allowed;" aria-label="Locked">${btnContent('lock', 'Locked')}</button>`
                                             : `<button class="btn-sm" data-action="start" data-id="${i.id}" title="Start Install" aria-label="Install" style="background-color: var(--brand-green); color: white;">${btnContent('wrench', 'Install')}</button>`
@@ -70,7 +70,7 @@ export default class ReadyQueueView {
                         if (ocular) {
                             previewDiv.innerHTML = buildInspectionSummaryHtml(ocular);
                         } else {
-                            previewDiv.innerHTML = '<p>Ocular record not found.</p>';
+                            previewDiv.innerHTML = '<p>Inspection record not found.</p>';
                         }
                     } else if (btn.dataset.action === 'start') {
                         window.history.pushState(null, '', '/ocular/installation');

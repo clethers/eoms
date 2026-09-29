@@ -20,7 +20,7 @@ export default class SupportTicketsView {
                             <input type="text" name="clientName" required>
                         </div>
                         <div class="form-group">
-                            <label>Related Ocular (Optional)</label>
+                            <label>Related Inspection (Optional)</label>
                             <select name="ocularId" id="ticket-ocular-select">
                                 <option value="">None</option>
                             </select>

@@ -34,7 +34,7 @@ export function buildInspectionSummaryHtml(item) {
     
     return `
         <div class="inspection-summary">
-            <h3>Ocular Inspection Summary: ${escapeHTML(item.rnNo || 'N/A')}</h3>
+            <h3>Inspection Summary: ${escapeHTML(item.rnNo || 'N/A')}</h3>
             <p><strong>Client:</strong> ${escapeHTML(item.clientName || 'N/A')}</p>
             <p><strong>Date:</strong> ${escapeHTML(formatDateTime(item.dateTime))}</p>
             <p><strong>Scope:</strong> ${escapeHTML(item.scopeOfWorks || 'N/A')}</p>

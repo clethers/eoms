@@ -723,6 +723,15 @@ body.auth-locked #app-header {
 .photo-thumb-remove:hover::before { background: #dc2626; }
 button:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* Calendar Prev/Next: secondary button (dark text on light grey, ~10:1 contrast) */
+.cal-nav-btn {
+  background: #e2e8f0;
+  color: #1f2937;
+  border: 1px solid #94a3b8;
+}
+.cal-nav-btn:hover { background: #cbd5e1; color: #111827; }
+.cal-nav-btn:focus-visible { outline: 2px solid var(--brand-blue); outline-offset: 2px; }
+
 /* ===== Alignment pass (2026-09-27) ===== */
 /* One control height for inputs, selects and buttons that sit side by side.
    Touch widths use the 44px target already enforced by the responsive pass. */

@@ -234,7 +234,7 @@ ${watermark ? `<div class="watermark">${esc(watermark)}</div>` : ''}
 </html>`;
 }
 
-// ---------- Ocular Site Inspection Report ----------
+// ---------- Site Inspection Report ----------
 
 /** Slot values may be a single data URL (old) or an array of data URLs (multi-upload). */
 function ocularPhotos(r) {
@@ -323,14 +323,14 @@ export function buildOcularCertificateHtml(record, opts = {}) {
     ].join('');
 
     return page({
-        title: `Ocular Site Inspection Report - ${rn}`,
-        docTitle: 'Ocular Site Inspection Report',
+        title: `Site Inspection Report - ${rn}`,
+        docTitle: 'Site Inspection Report',
         subtitle: `EV charger site survey & electrical readiness assessment  •  RN ${rn}`,
         badgeHtml: approved ? badge(true, '✓ QA APPROVED') : badge(false, formatStatus(r.status).toUpperCase()),
         docRef: `ECO-OCULAR-${rn}`,
         watermark: approved ? '' : 'NOT APPROVED',
-        footerLabel: 'Ocular Site Inspection Report',
-        footerType: 'Ocular Inspection',
+        footerLabel: 'Site Inspection Report',
+        footerType: 'Inspection',
         body,
         logoUrl: opts.logoUrl
     });
@@ -391,7 +391,7 @@ export function buildInstallationCertificateHtml(record, ocular, opts = {}) {
             ['Boxes / Enclosures', esc(rough.boxes)]
         ]);
     } else {
-        s1 = '<div class="nodata">Ocular record not linked.</div>';
+        s1 = '<div class="nodata">Inspection record not linked.</div>';
     }
 
     const s2grid = fieldGrid([
@@ -419,7 +419,7 @@ export function buildInstallationCertificateHtml(record, ocular, opts = {}) {
     </div>`;
 
     const body = [
-        section(1, 'Summary of Ocular Site Inspection', o && has(o.rnNo) ? `RN: ${esc(o.rnNo)}` : '', s1),
+        section(1, 'Summary of Site Inspection', o && has(o.rnNo) ? `RN: ${esc(o.rnNo)}` : '', s1),
         section(2, 'Installation & Commissioning', instRef, s2),
         section(3, 'Materials Installed', instRef, s3),
         section(4, 'Photo Evidence', `${photos.length} PHOTO(S)`, s4, true),
