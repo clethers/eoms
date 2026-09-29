@@ -109,7 +109,7 @@ const UNIQUE_MESSAGES = {
   profiles_email_key: 'A profile with this email already exists',
   profiles_auth_user_id_key: 'This login is already linked to another profile',
   sales_leads_legacy_row_id_key: 'A sales lead with this legacy row ID already exists',
-  sales_leads_ocular_id_key: 'A sales lead is already linked to this ocular inspection',
+  sales_leads_ocular_id_key: 'A sales lead is already linked to this inspection',
   master_data_catalog_pkey: 'A catalog item with this key already exists'
 };
 
