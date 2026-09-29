@@ -917,3 +917,5 @@ li.is-done > .lead-timeline__tick { background: var(--brand-green, #16a34a); bor
 @media screen and (min-width: 641px) and (max-width: 1024px) {
   .main-view .leads-table { display: table; white-space: normal; }
 }
+/* Clients: brief highlight on a newly added row */
+.leads-table tr.lead-row--new > td { background: #ecfdf5; transition: background 0.6s ease; }

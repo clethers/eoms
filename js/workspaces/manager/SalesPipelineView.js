@@ -111,48 +111,12 @@ export default class SalesPipelineView {
         container.className = 'card';
         
         container.innerHTML = `
-            <h2>Clients</h2>
-            <div class="form-panel">
-                <h3>Add New Lead</h3>
-                <form id="add-lead-form" class="form-row">
-                    <div class="form-group">
-                        <label>First Name</label>
-                        <input type="text" name="firstName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Last Name</label>
-                        <input type="text" name="lastName">
-                    </div>
-                    <div class="form-group">
-                        <label>Contact Number</label>
-                        <input type="text" name="phone" inputmode="tel">
-                    </div>
-                    <div class="form-group">
-                        <label>Email (optional)</label>
-                        <input type="email" name="email">
-                    </div>
-                    <div class="form-group">
-                        <label>Mode of Communication</label>
-                        <input type="text" name="modeOfCommunication" list="add-lead-modes" autocomplete="off">
-                        ${modeDatalist('add-lead-modes')}
-                    </div>
-                    <div class="form-group">
-                        <label>Client ID (optional)</label>
-                        <input type="text" name="clientId">
-                    </div>
-                    <div class="form-group">
-                        <label>RN No. (optional)</label>
-                        <input type="text" name="rnNo">
-                    </div>
-                    <div class="form-row-end">
-                        <div class="form-group">
-                            <label>Installation Address</label>
-                            <input type="text" name="installationAddress" required>
-                        </div>
-                        <button type="submit">${btnContent('plus', 'Add Lead')}</button>
-                        <button type="button" id="bulk-import-btn" style="background-color: #64748b; color: white;">${btnContent('upload', 'Bulk Import (Mock)')}</button>
-                    </div>
-                </form>
+            <div class="page-header">
+                <h2>Clients</h2>
+                <div class="toolbar">
+                    <button type="button" id="add-client-btn" aria-haspopup="dialog">${btnContent('plus', 'Add Client')}</button>
+                    <button type="button" id="bulk-import-btn" style="background-color: #64748b; color: white;">${btnContent('upload', 'Bulk Import (Mock)')}</button>
+                </div>
             </div>
             <div class="form-row" style="margin-bottom: 1rem;">
                 <div class="form-group">
@@ -174,35 +138,8 @@ export default class SalesPipelineView {
             </div>
         `;
 
-        const form = container.querySelector('#add-lead-form');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-            try {
-                const val = (k) => String(formData.get(k) || '').trim();
-                const phone = val('phone'), email = val('email');
-                await createSalesLead({
-                    clientId: val('clientId'),
-                    rnNo: val('rnNo'),
-                    firstName: val('firstName'),
-                    lastName: val('lastName'),
-                    name: fullName(val('firstName'), val('lastName')),
-                    email,
-                    phone,
-                    contactInfo: phone || email,
-                    installationAddress: val('installationAddress'),
-                    modeOfCommunication: val('modeOfCommunication'),
-                    remarks: '',
-                    followUp1: '',
-                    followUp2: '',
-                    createdBy: getActiveProfileId()
-                });
-                form.reset();
-                this.refreshLeads(container.querySelector('#pipeline-table-container'));
-            } catch (err) {
-                alert('Error creating lead: ' + err.message);
-            }
-        });
+        const addBtn = container.querySelector('#add-client-btn');
+        addBtn.addEventListener('click', () => this.openAddClientModal(container.querySelector('#pipeline-table-container'), addBtn));
 
         const bulkBtn = container.querySelector('#bulk-import-btn');
         bulkBtn.addEventListener('click', async () => {
@@ -238,6 +175,174 @@ export default class SalesPipelineView {
         this.keepPage = this.currentPage;
         this.allLeads = null;
         return this.loadPipeline(container);
+    }
+
+    /** Add Client popup: same fields and save path as the old inline "Add New Lead" form. */
+    openAddClientModal(container, triggerBtn) {
+        const titleId = 'add-client-title';
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+
+        modal.innerHTML = `
+            <div role="dialog" aria-modal="true" aria-labelledby="${titleId}" tabindex="-1"
+                 style="background: white; padding: 2rem; border-radius: 8px; width: 640px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+                <div class="page-header" style="margin-bottom: 1.5rem;">
+                    <h3 id="${titleId}">Add Client</h3>
+                </div>
+                <form id="add-lead-form" class="form-stack" novalidate>
+                    <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem;">
+                        <div class="form-group">
+                            <label for="add-lead-firstName">First Name</label>
+                            <input type="text" id="add-lead-firstName" name="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-lead-lastName">Last Name</label>
+                            <input type="text" id="add-lead-lastName" name="lastName">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-lead-phone">Contact Number</label>
+                            <input type="text" id="add-lead-phone" name="phone" inputmode="tel">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-lead-email">Email (optional)</label>
+                            <input type="email" id="add-lead-email" name="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-lead-mode">Mode of Communication</label>
+                            <input type="text" id="add-lead-mode" name="modeOfCommunication" list="add-lead-modes" autocomplete="off">
+                            ${modeDatalist('add-lead-modes')}
+                        </div>
+                        <div class="form-group">
+                            <label for="add-lead-clientId">Client ID (optional)</label>
+                            <input type="text" id="add-lead-clientId" name="clientId">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-lead-rnNo">RN No. (optional)</label>
+                            <input type="text" id="add-lead-rnNo" name="rnNo">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-lead-address">Installation Address</label>
+                            <input type="text" id="add-lead-address" name="installationAddress" required>
+                        </div>
+                    </div>
+                    <p id="add-lead-error" role="alert" style="display: none; margin: 0; color: #b91c1c;"></p>
+                    <div class="modal-actions" style="margin-top: 0.5rem;">
+                        <button type="button" id="add-lead-cancel-btn" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Cancel')}</button>
+                        <button type="submit" id="add-lead-submit-btn">${btnContent('plus', 'Add Client')}</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        const dialog = modal.querySelector('[role="dialog"]');
+        const form = modal.querySelector('#add-lead-form');
+        const errEl = modal.querySelector('#add-lead-error');
+        const submitBtn = modal.querySelector('#add-lead-submit-btn');
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const closeModal = () => {
+            document.body.style.overflow = prevOverflow;
+            document.removeEventListener('keydown', onKeydown);
+            if (modal.parentNode) document.body.removeChild(modal);
+            if (triggerBtn && document.contains(triggerBtn)) triggerBtn.focus();
+        };
+        const onKeydown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeModal();
+                return;
+            }
+            if (e.key === 'Tab') {
+                const focusable = Array.from(dialog.querySelectorAll(focusableSelector)).filter(el => !el.disabled);
+                if (focusable.length === 0) return;
+                const first = focusable[0], last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault(); last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault(); first.focus();
+                }
+            }
+        };
+        document.addEventListener('keydown', onKeydown);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        modal.querySelector('#add-lead-cancel-btn').addEventListener('click', closeModal);
+
+        const showError = (msg) => {
+            errEl.textContent = msg;
+            errEl.style.display = msg ? '' : 'none';
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showError('');
+            // novalidate: run the browser checks ourselves so the first invalid field gets focus.
+            const invalid = Array.from(form.elements).find(el => el.willValidate && !el.checkValidity());
+            if (invalid) {
+                showError(invalid.name === 'email' ? 'Please enter a valid email address.' : `Please fill in ${invalid.closest('.form-group')?.querySelector('label')?.textContent || 'the required fields'}.`);
+                invalid.focus();
+                return;
+            }
+            const formData = new FormData(form);
+            const val = (k) => String(formData.get(k) || '').trim();
+            if (!val('firstName')) {
+                showError('Please fill in First Name.');
+                form.querySelector('[name="firstName"]').focus();
+                return;
+            }
+            const phone = val('phone'), email = val('email');
+            const lead = {
+                clientId: val('clientId'),
+                rnNo: val('rnNo'),
+                firstName: val('firstName'),
+                lastName: val('lastName'),
+                name: fullName(val('firstName'), val('lastName')),
+                email,
+                phone,
+                contactInfo: phone || email,
+                installationAddress: val('installationAddress'),
+                modeOfCommunication: val('modeOfCommunication'),
+                remarks: '',
+                followUp1: '',
+                followUp2: '',
+                createdBy: getActiveProfileId()
+            };
+            submitBtn.disabled = true;
+            submitBtn.setAttribute('aria-busy', 'true');
+            try {
+                await createSalesLead(lead);
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.removeAttribute('aria-busy');
+                showError('Error creating client: ' + (err && err.message ? err.message : err));
+                return;
+            }
+            form.reset();
+            closeModal();
+            await this.refreshLeads(container);
+            this.highlightLead(container, lead.id);
+        });
+
+        document.body.appendChild(modal);
+        form.querySelector('[name="firstName"]').focus();
+    }
+
+    /** Briefly highlight a freshly added row and scroll it into view (no-op if it is filtered out). */
+    highlightLead(container, id) {
+        if (id == null) return;
+        const row = container.querySelector(`tr.lead-row[data-id="${CSS.escape(String(id))}"]`);
+        if (!row) return;
+        row.classList.add('lead-row--new');
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        setTimeout(() => row.classList.remove('lead-row--new'), 2500);
     }
 
     /** Read-only Details popup: client info, progress timeline and remarks. Edit hands off to the CRM Profile modal. */
@@ -476,7 +581,7 @@ export default class SalesPipelineView {
             }
 
             if (this.allLeads.length === 0) {
-                container.innerHTML = '<p>No leads found. Add one above.</p>';
+                container.innerHTML = '<p>No clients yet. Use Add Client to create one.</p>';
                 return;
             }
 
