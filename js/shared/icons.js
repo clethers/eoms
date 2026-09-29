@@ -31,6 +31,7 @@ const PATHS = {
     'unlock': '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
     'lock': '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
     'filter': '<path d="M22 3H2l8 9.46V19l4 2v-8.54Z"/>',
+    'search': '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
     'chevron-down': '<path d="m6 9 6 6 6-6"/>',
     'chevron-up': '<path d="m18 15-6-6-6 6"/>',
     'chevrons-down': '<path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/>',

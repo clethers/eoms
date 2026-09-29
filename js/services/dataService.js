@@ -1,7 +1,6 @@
 import * as db from './localDb.js';
-import { logEvent } from './auditLogService.js';
+import { recordAudit, diffFields, diffChecklist, leadLabel } from './auditLogService.js';
 import { getCatalog } from './masterDataService.js';
-import { getActiveProfileId } from '../components/ActiveProfilePicker.js';
 
 const { COLLECTIONS, get, getAll, put, remove, getByIndex, getAllByIndex, dbEvents } = db;
 
@@ -50,6 +49,7 @@ export async function fetchMySubmittedInspections(profileId) {
 export async function updateInspectionStatus(id, newStatus, extra = {}) {
   const record = await get(COLLECTIONS.OCULAR_INSPECTIONS, id);
   if (!record) throw new Error('Inspection not found');
+  const before = { status: record.status, qaNotes: record.qaNotes };
   Object.assign(record, { status: newStatus }, extra);
   
   if (newStatus === 'APPROVED' && record.assignedTeam) {
@@ -58,7 +58,18 @@ export async function updateInspectionStatus(id, newStatus, extra = {}) {
     await createNotification(record.assignedTeam, `Inspection needs revision: ${record.rnNo}`, '/ocular/history');
   }
 
-  return put(COLLECTIONS.OCULAR_INSPECTIONS, record);
+  const saved = await put(COLLECTIONS.OCULAR_INSPECTIONS, record);
+  const eventType = newStatus === 'APPROVED' ? 'APPROVE' : newStatus === 'REJECTED' ? 'REJECT' : 'UPDATE_STATUS';
+  await recordAudit({
+    category: 'MANAGER_APPROVAL',
+    eventType,
+    resourceType: 'OCULAR',
+    resourceId: record.id,
+    resourceLabel: `Inspection · ${record.rnNo || '#' + record.id}`,
+    description: `Inspection ${record.rnNo || record.id} status ${before.status || 'none'} -> ${newStatus}`,
+    changesDelta: diffFields(before, record, ['status', 'qaNotes'])
+  });
+  return saved;
 }
 
 export async function assignInspectionTeam(id, teamId) {
@@ -219,7 +230,29 @@ export async function createSalesLead(leadData) {
   leadData.stage = 'INITIAL_CONTACT';
   leadData.stageINITIAL_CONTACTAt = new Date().toISOString();
   markChecklistDone(leadData, 'INITIAL_CONTACT');
-  return put(COLLECTIONS.SALES_LEADS, leadData);
+  const saved = await put(COLLECTIONS.SALES_LEADS, leadData);
+  await recordAudit({
+    category: 'CLIENT_RECORDS',
+    eventType: 'CREATE_LEAD',
+    resourceType: 'LEAD',
+    resourceId: saved.id,
+    resourceLabel: leadLabel(saved),
+    description: `Client added: ${leadLabel(saved)}`
+  }, { always: true });
+  return saved;
+}
+
+/** Log a stage move (skipped when the stage did not change). */
+function auditStage(lead, oldStage, newStage, description) {
+  return recordAudit({
+    category: 'CUSTOMER_CARE',
+    eventType: 'UPDATE_STAGE',
+    resourceType: 'LEAD',
+    resourceId: lead.id,
+    resourceLabel: leadLabel(lead),
+    description,
+    changesDelta: diffFields({ stage: oldStage }, { stage: newStage }, ['stage'])
+  });
 }
 
 export async function updateSalesLeadStage(id, stage) {
@@ -230,60 +263,41 @@ export async function updateSalesLeadStage(id, stage) {
   lead.stage = stage;
   lead[`stage${stage}At`] = new Date().toISOString();
   markChecklistDone(lead, stage);
-  
-  const profileId = getActiveProfileId();
-  let email = 'System', role = 'System';
-  try {
-      const { getProfiles } = await import('./userService.js');
-      const profiles = await getProfiles();
-      const p = profiles.find(x => x.id === profileId);
-      if (p) { email = p.email; role = p.role; }
-  } catch(e) {}
-  
-  // Create audit log
-  await logEvent({
-      actorId: profileId,
-      actorEmail: email,
-      actorRole: role,
-      category: 'CUSTOMER_CARE',
-      eventType: 'UPDATE_STAGE',
-      severity: 'INFO',
-      resourceType: 'LEAD',
-      resourceId: id,
-      description: `Stage updated from ${oldStage || 'No status'} to ${stage}`
-  });
-  
-  return put(COLLECTIONS.SALES_LEADS, lead);
+
+  const saved = await put(COLLECTIONS.SALES_LEADS, lead);
+  await auditStage(lead, oldStage, stage, `Stage updated from ${oldStage || 'No status'} to ${stage}`);
+  return saved;
 }
+
+// Client fields compared for the "Details edited" log (stageChecklist is summarised per step).
+const LEAD_AUDIT_FIELDS = ['clientId', 'rnNo', 'firstName', 'lastName', 'name', 'phone', 'email', 'contactInfo',
+  'modeOfCommunication', 'buildingType', 'scopeOfWorks', 'installationAddress', 'remarks', 'followUp1', 'followUp2'];
 
 export async function updateSalesLeadInfo(id, updates) {
   const lead = await get(COLLECTIONS.SALES_LEADS, id);
   if (!lead) throw new Error('Lead not found');
   
+  const before = { ...lead };
   Object.assign(lead, updates);
-  
-  const profileId = getActiveProfileId();
-  let email = 'System', role = 'System';
-  try {
-      const { getProfiles } = await import('./userService.js');
-      const profiles = await getProfiles();
-      const p = profiles.find(x => x.id === profileId);
-      if (p) { email = p.email; role = p.role; }
-  } catch(e) {}
-  
-  await logEvent({
-      actorId: profileId,
-      actorEmail: email,
-      actorRole: role,
-      category: 'CUSTOMER_CARE',
-      eventType: 'UPDATE_INFO',
-      severity: 'INFO',
-      resourceType: 'LEAD',
-      resourceId: id,
-      description: `CRM Profile updated for ${lead.name}`
+
+  const keys = LEAD_AUDIT_FIELDS.filter(k => Object.prototype.hasOwnProperty.call(updates, k));
+  const delta = diffFields(before, lead, keys);
+  // name / contactInfo are derived from first+last / phone|email: only show them when their sources did not already.
+  if (delta.firstName || delta.lastName) delete delta.name;
+  if (delta.phone || delta.email) delete delta.contactInfo;
+  if ('stageChecklist' in updates) Object.assign(delta, diffChecklist(before.stageChecklist, lead.stageChecklist));
+
+  const saved = await put(COLLECTIONS.SALES_LEADS, lead);
+  await recordAudit({
+    category: 'CUSTOMER_CARE',
+    eventType: 'UPDATE_INFO',
+    resourceType: 'LEAD',
+    resourceId: id,
+    resourceLabel: leadLabel(lead),
+    description: `CRM Profile updated for ${lead.name}`,
+    changesDelta: delta
   });
-  
-  return put(COLLECTIONS.SALES_LEADS, lead);
+  return saved;
 }
 
 export async function updateSalesLeadOcularId(id, ocularId) {
@@ -301,29 +315,10 @@ export async function updateLeadStageByOcularId(ocularId, newStage) {
       lead.stage = newStage;
       lead[`stage${newStage}At`] = new Date().toISOString();
       markChecklistDone(lead, newStage);
-      
-      const profileId = getActiveProfileId();
-      let email = 'System', role = 'System';
-      try {
-          const { getProfiles } = await import('./userService.js');
-          const profiles = await getProfiles();
-          const p = profiles.find(x => x.id === profileId);
-          if (p) { email = p.email; role = p.role; }
-      } catch(e) {}
-      
-      await logEvent({
-          actorId: profileId,
-          actorEmail: email,
-          actorRole: role,
-          category: 'CUSTOMER_CARE',
-          eventType: 'UPDATE_STAGE',
-          severity: 'INFO',
-          resourceType: 'LEAD',
-          resourceId: lead.id,
-          description: `Auto-updated stage from ${oldStage || 'No status'} to ${newStage} via Operations`
-      });
-      
-      return put(COLLECTIONS.SALES_LEADS, lead);
+
+      const saved = await put(COLLECTIONS.SALES_LEADS, lead);
+      await auditStage(lead, oldStage, newStage, `Auto-updated stage from ${oldStage || 'No status'} to ${newStage} via Operations`);
+      return saved;
   }
 }
 
@@ -356,10 +351,12 @@ export async function dispatchOcularFromLead(leadId, teamId, rnNo, scheduledDate
   const savedInspection = await put(COLLECTIONS.OCULAR_INSPECTIONS, inspectionData);
   
   lead.ocularId = savedInspection.id;
+  const oldStage = lead.stage;
   lead.stage = 'SITE_VISIT_SCHEDULED';
   lead['stageSITE_VISIT_SCHEDULEDAt'] = new Date().toISOString();
   markChecklistDone(lead, 'SITE_VISIT_SCHEDULED');
   await put(COLLECTIONS.SALES_LEADS, lead);
+  await auditStage(lead, oldStage, 'SITE_VISIT_SCHEDULED', `Inspection dispatched: stage from ${oldStage || 'No status'} to SITE_VISIT_SCHEDULED`);
 
   await createNotification(teamId, `New inspection assigned: ${rnNo} – ${lead.name}`, '/ocular/assigned');
   
@@ -384,10 +381,12 @@ export async function dispatchInstallationFromLead(leadId, teamId, installationN
   const savedInstallation = await put(COLLECTIONS.INSTALLATION_RECORDS, installationData);
   
   lead.installationId = savedInstallation.id;
+  const oldStage = lead.stage;
   lead.stage = 'INSTALLATION_SCHEDULED';
   lead['stageINSTALLATION_SCHEDULEDAt'] = new Date().toISOString();
   markChecklistDone(lead, 'INSTALLATION_SCHEDULED');
   await put(COLLECTIONS.SALES_LEADS, lead);
+  await auditStage(lead, oldStage, 'INSTALLATION_SCHEDULED', `Installation dispatched: stage from ${oldStage || 'No status'} to INSTALLATION_SCHEDULED`);
 
   await createNotification(teamId, `New installation assigned: ${installationNo} – ${lead.name}`, '/ocular/ready');
   
