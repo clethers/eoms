@@ -158,6 +158,10 @@ export default class SalesPipelineView {
                     <label for="lead-search">Search clients</label>
                     <input type="search" id="lead-search" placeholder="Name, Installation No., RN No., phone or email">
                 </div>
+                <div class="form-group">
+                    <label for="stage-filter">Stage</label>
+                    <select id="stage-filter"><option value="">All stages</option></select>
+                </div>
             </div>
             <div id="pipeline-table-container">
                 <div class="skeleton skeleton-title"></div>
@@ -192,6 +196,13 @@ export default class SalesPipelineView {
         this.searchQuery = '';
         container.querySelector('#lead-search').addEventListener('input', (e) => {
             this.searchQuery = e.target.value.trim().toLowerCase();
+            this.currentPage = 1;
+            this.loadPipeline(container.querySelector('#pipeline-table-container'));
+        });
+
+        this.stageFilter = '';
+        container.querySelector('#stage-filter').addEventListener('change', (e) => {
+            this.stageFilter = e.target.value;
             this.currentPage = 1;
             this.loadPipeline(container.querySelector('#pipeline-table-container'));
         });
@@ -628,10 +639,15 @@ export default class SalesPipelineView {
         try {
             if (!this.allLeads) {
                 this.allLeads = await fetchAllSalesLeads();
-                this.allLeads.sort((a, b) => b.id - a.id);
+                this.allLeads.sort((a, b) => {
+                    const at = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    if (bt !== at) return bt - at;
+                    return (b.id || 0) - (a.id || 0);
+                });
                 this.currentPage = this.keepPage || 1;
                 this.keepPage = null;
-                this.pageSize = 3; // Temporarily lowered so you can see it in action!
+                this.pageSize = 25;
             }
 
             if (this.allLeads.length === 0) {
@@ -640,15 +656,40 @@ export default class SalesPipelineView {
             }
 
             const q = this.searchQuery || '';
-            const filtered = q ? this.allLeads.filter(l => leadMatches(l, q)) : this.allLeads;
-            if (filtered.length === 0) {
-                container.innerHTML = '<p>No clients match your search.</p>';
-                return;
+            const searchFiltered = q ? this.allLeads.filter(l => leadMatches(l, q)) : this.allLeads;
+
+            // Keep the stage filter's option labels/counts current; counts reflect the active search.
+            const stageSelect = container.parentElement && container.parentElement.querySelector('#stage-filter');
+            if (stageSelect) {
+                const stageCounts = {};
+                searchFiltered.forEach(l => {
+                    const key = l.stage || '__NONE__';
+                    stageCounts[key] = (stageCounts[key] || 0) + 1;
+                });
+                stageSelect.innerHTML = `
+                    <option value="">All stages (${searchFiltered.length})</option>
+                    <option value="__NONE__">No status (${stageCounts.__NONE__ || 0})</option>
+                    ${STAGES.map(s => `<option value="${s}">${escapeHTML(formatStatus(s))} (${stageCounts[s] || 0})</option>`).join('')}
+                `;
+                stageSelect.value = this.stageFilter || '';
             }
+
+            const stageFilter = this.stageFilter || '';
+            const filtered = stageFilter
+                ? searchFiltered.filter(l => stageFilter === '__NONE__' ? !l.stage : l.stage === stageFilter)
+                : searchFiltered;
+
             const leadsToRender = filtered.slice(0, this.currentPage * this.pageSize);
             const hasMore = leadsToRender.length < filtered.length;
+            const countLine = `<p class="lead-count-line" style="margin: 0 0 0.75rem; color: #475569; font-size: 0.9rem;">Showing ${leadsToRender.length} of ${filtered.length} clients</p>`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = countLine + '<p>No clients match your search and filter.</p>';
+                return;
+            }
 
             container.innerHTML = `
+                ${countLine}
                 <table class="leads-table" style="width: 100%; text-align: left;">
                     <thead><tr><th>Installation No.</th><th>RN No.</th><th>Name</th><th>Contact Number</th><th>Stage</th><th>Actions</th></tr></thead>
                     <tbody>
