@@ -3,24 +3,30 @@ import UserManagementView from './admin/UserManagementView.js';
 import AuditLogsView from './admin/AuditLogsView.js';
 import ClientDirectoryView from './admin/ClientDirectoryView.js';
 import MasterDataCatalogView from './admin/MasterDataCatalogView.js';
+import SalesPipelineView from './manager/SalesPipelineView.js';
+import CalendarView from './manager/CalendarView.js';
 
 export default class AdminWorkspace {
     async render(path) {
         const container = document.createElement('div');
         container.className = 'workspace-layout';
-        
+
         container.innerHTML = `
             <aside class="sidebar">
                 <nav class="sidebar-nav">
                     <div class="sidebar-category">Overview</div>
                     <a href="/admin/dashboard" class="${path === '/admin/dashboard' || path === '/admin' ? 'active' : ''}" data-link>Dashboard</a>
-                    
+
+                    <div class="sidebar-category">CRM & Schedule</div>
+                    <a href="/admin/clients" class="${path === '/admin/clients' ? 'active' : ''}" data-link>Clients</a>
+                    <a href="/admin/calendar" class="${path === '/admin/calendar' ? 'active' : ''}" data-link>Calendar</a>
+
                     <div class="sidebar-category">Security & Access</div>
                     <a href="/admin/users" class="${path === '/admin/users' ? 'active' : ''}" data-link>Users</a>
                     <a href="/admin/audit" class="${path === '/admin/audit' ? 'active' : ''}" data-link>Audit Logs</a>
-                    
+
                     <div class="sidebar-category">Core Data</div>
-                    <a href="/admin/clients" class="${path === '/admin/clients' ? 'active' : ''}" data-link>Inspection Records</a>
+                    <a href="/admin/inspections" class="${path === '/admin/inspections' ? 'active' : ''}" data-link>Inspection Records</a>
                     <a href="/admin/inventory" class="${path === '/admin/inventory' ? 'active' : ''}" data-link>Inventory</a>
                 </nav>
             </aside>
@@ -28,9 +34,9 @@ export default class AdminWorkspace {
                 <!-- Content injected here -->
             </main>
         `;
-        
+
         const main = container.querySelector('#admin-main');
-        
+
         let view;
         if (path === '/admin/dashboard' || path === '/admin') {
             view = new DashboardView();
@@ -38,10 +44,14 @@ export default class AdminWorkspace {
             view = new UserManagementView();
         } else if (path === '/admin/audit') {
             view = new AuditLogsView();
-        } else if (path === '/admin/clients') {
+        } else if (path === '/admin/inspections') {
             view = new ClientDirectoryView();
         } else if (path === '/admin/inventory') {
             view = new MasterDataCatalogView();
+        } else if (path === '/admin/clients') {
+            view = new SalesPipelineView();
+        } else if (path === '/admin/calendar') {
+            view = new CalendarView();
         }
         
         if (view) {
