@@ -4,7 +4,41 @@ import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
 import { getProfiles } from '../../services/userService.js';
-import { btnContent } from '../../shared/icons.js';
+import { getItemsByCategory } from '../../services/masterDataService.js';
+import { btnContent, icon } from '../../shared/icons.js';
+
+// Same three options as the ocular inspection form's Type of Residency select (no blank default).
+const RESIDENCY_OPTIONS = ['Residential', 'Commercial', 'Industrial'];
+// Same four defaults as the ocular inspection form's Scope of Works select; catalog items are appended after.
+const SCOPE_DEFAULT_OPTIONS = ['Site Inspection', 'Installation', 'Revisit', 'Checking'];
+
+async function loadScopeCatalogNames() {
+    try {
+        const items = await getItemsByCategory('scopes');
+        return items.map(i => i.itemName).filter(Boolean);
+    } catch (e) {
+        console.error('Failed to load scope catalog:', e);
+        return [];
+    }
+}
+
+function scopeOptionsHtml(selected, catalogExtra) {
+    return [...SCOPE_DEFAULT_OPTIONS, ...(catalogExtra || [])]
+        .map(s => `<option value="${escapeHTML(s)}" ${selected === s ? 'selected' : ''}>${escapeHTML(s)}</option>`).join('');
+}
+
+function residencyOptionsHtml(selected) {
+    return RESIDENCY_OPTIONS.map(b => `<option value="${b}" ${selected === b ? 'selected' : ''}>${b}</option>`).join('');
+}
+
+/** Split a full "Client Name" on the LAST space: last word -> lastName, the rest -> firstName. Single word -> firstName only. */
+function splitClientName(full) {
+    const s = String(full || '').trim();
+    if (!s) return { firstName: '', lastName: '' };
+    const i = s.lastIndexOf(' ');
+    if (i === -1) return { firstName: s, lastName: '' };
+    return { firstName: s.slice(0, i).trim(), lastName: s.slice(i + 1).trim() };
+}
 
 // Crew picker for dispatch modals: active Operations crew only, no default selection.
 async function buildCrewSelectHtml(selectId) {
@@ -74,7 +108,8 @@ function detailsModalHtml(l) {
             ${detailItem('Email', escapeHTML(l.email))}
             ${detailItem('Installation Address', escapeHTML(l.installationAddress))}
             ${detailItem('Mode of Communication', escapeHTML(l.modeOfCommunication))}
-            ${detailItem('Building Type', escapeHTML(l.buildingType))}
+            ${detailItem('Type of Residency', escapeHTML(l.buildingType))}
+            ${detailItem('Scope of Works', escapeHTML(l.scopeOfWorks))}
             ${detailItem('Dispatch', l.ocularId ? 'Dispatched' : 'Pending')}
             ${detailItem('Created', escapeHTML(created))}
         </div>
@@ -121,7 +156,7 @@ export default class SalesPipelineView {
             <div class="form-row" style="margin-bottom: 1rem;">
                 <div class="form-group">
                     <label for="lead-search">Search clients</label>
-                    <input type="search" id="lead-search" placeholder="Name, Client ID, RN No., phone or email">
+                    <input type="search" id="lead-search" placeholder="Name, Installation No., RN No., phone or email">
                 </div>
             </div>
             <div id="pipeline-table-container">
@@ -139,7 +174,7 @@ export default class SalesPipelineView {
         `;
 
         const addBtn = container.querySelector('#add-client-btn');
-        addBtn.addEventListener('click', () => this.openAddClientModal(container.querySelector('#pipeline-table-container'), addBtn));
+        addBtn.addEventListener('click', () => { this.openAddClientModal(container.querySelector('#pipeline-table-container'), addBtn); });
 
         const bulkBtn = container.querySelector('#bulk-import-btn');
         bulkBtn.addEventListener('click', async () => {
@@ -177,9 +212,11 @@ export default class SalesPipelineView {
         return this.loadPipeline(container);
     }
 
-    /** Add Client popup: same fields and save path as the old inline "Add New Lead" form. */
-    openAddClientModal(container, triggerBtn) {
+    /** Add Client popup: same fields, labels, order and required marks as the New Inspection form's Step 1. */
+    async openAddClientModal(container, triggerBtn) {
+        const scopeCatalog = await loadScopeCatalogNames();
         const titleId = 'add-client-title';
+        const hintId = 'add-client-hint';
         const modal = document.createElement('div');
         modal.style.position = 'fixed';
         modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
@@ -187,52 +224,51 @@ export default class SalesPipelineView {
         modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
         modal.style.zIndex = '1000';
 
+        // Portrait, single-column, sectioned to match the New Inspection form's fields/keys/required rules.
+        // inputId is reused for the label's `for`, the field's own id and its error paragraph's id (inputId + "-err").
+        const field = (inputId, labelText, inputHtmlBuilder) => `
+            <div class="form-group">
+                <label for="${inputId}">${labelText}</label>
+                ${inputHtmlBuilder(inputId, `${inputId}-err`)}
+                <p class="field-error" id="${inputId}-err" role="alert"></p>
+            </div>`;
+
         modal.innerHTML = `
-            <div role="dialog" aria-modal="true" aria-labelledby="${titleId}" tabindex="-1"
-                 style="background: white; padding: 2rem; border-radius: 8px; width: 640px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
-                <div class="page-header" style="margin-bottom: 1.5rem;">
-                    <h3 id="${titleId}">Add Client</h3>
+            <div role="dialog" aria-modal="true" aria-labelledby="${titleId}" aria-describedby="${hintId}" tabindex="-1" id="add-client-dialog">
+                <div class="add-client-header">
+                    <div>
+                        <h3 id="${titleId}">Add Client</h3>
+                        <p id="${hintId}" class="add-client-hint">Fields marked * are required</p>
+                    </div>
+                    <button type="button" id="add-lead-close-x" class="icon-btn" aria-label="Close">${icon('x')}</button>
                 </div>
                 <form id="add-lead-form" class="form-stack" novalidate>
-                    <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem;">
+                    <div class="add-client-scroll">
+                        <h4 class="crm-section-title">Client</h4>
+                        ${field('add-lead-clientName', 'Client Name *', (id, errId) => `<input type="text" id="${id}" name="clientName" required autocomplete="name" aria-describedby="${errId}">`)}
                         <div class="form-group">
-                            <label for="add-lead-firstName">First Name</label>
-                            <input type="text" id="add-lead-firstName" name="firstName" required>
+                            <label for="add-lead-phone">Contact No</label>
+                            <input type="tel" id="add-lead-phone" name="phone" inputmode="tel" autocomplete="tel">
                         </div>
+
+                        <h4 class="crm-section-title">Job references</h4>
+                        ${field('add-lead-rnNo', 'RN No *', (id, errId) => `<input type="text" id="${id}" name="rnNo" required autocomplete="off" spellcheck="false" aria-describedby="${errId}">`)}
+                        ${field('add-lead-clientId', 'Installation No *', (id, errId) => `<input type="text" id="${id}" name="clientId" required autocomplete="off" spellcheck="false" aria-describedby="${errId}">`)}
+
+                        <h4 class="crm-section-title">Site</h4>
                         <div class="form-group">
-                            <label for="add-lead-lastName">Last Name</label>
-                            <input type="text" id="add-lead-lastName" name="lastName">
+                            <label for="add-lead-scope">Scope of Works</label>
+                            <select id="add-lead-scope" name="scopeOfWorks">${scopeOptionsHtml('', scopeCatalog)}</select>
                         </div>
-                        <div class="form-group">
-                            <label for="add-lead-phone">Contact Number</label>
-                            <input type="text" id="add-lead-phone" name="phone" inputmode="tel">
-                        </div>
-                        <div class="form-group">
-                            <label for="add-lead-email">Email (optional)</label>
-                            <input type="email" id="add-lead-email" name="email">
-                        </div>
-                        <div class="form-group">
-                            <label for="add-lead-mode">Mode of Communication</label>
-                            <input type="text" id="add-lead-mode" name="modeOfCommunication" list="add-lead-modes" autocomplete="off">
-                            ${modeDatalist('add-lead-modes')}
-                        </div>
-                        <div class="form-group">
-                            <label for="add-lead-clientId">Client ID (optional)</label>
-                            <input type="text" id="add-lead-clientId" name="clientId">
-                        </div>
-                        <div class="form-group">
-                            <label for="add-lead-rnNo">RN No. (optional)</label>
-                            <input type="text" id="add-lead-rnNo" name="rnNo">
-                        </div>
-                        <div class="form-group">
-                            <label for="add-lead-address">Installation Address</label>
-                            <input type="text" id="add-lead-address" name="installationAddress" required>
-                        </div>
+                        ${field('add-lead-residency', 'Type of Residency *', (id, errId) => `<select id="${id}" name="buildingType" required aria-describedby="${errId}">${residencyOptionsHtml('')}</select>`)}
+                        ${field('add-lead-address', 'Location Address *', (id, errId) => `<textarea id="${id}" name="installationAddress" required rows="2" aria-describedby="${errId}"></textarea>`)}
                     </div>
-                    <p id="add-lead-error" role="alert" style="display: none; margin: 0; color: #b91c1c;"></p>
-                    <div class="modal-actions" style="margin-top: 0.5rem;">
-                        <button type="button" id="add-lead-cancel-btn" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Cancel')}</button>
-                        <button type="submit" id="add-lead-submit-btn">${btnContent('plus', 'Add Client')}</button>
+                    <div class="add-client-footer">
+                        <p class="field-error" id="add-lead-form-error" role="alert"></p>
+                        <div class="modal-actions" style="margin: 0;">
+                            <button type="button" id="add-lead-cancel-btn" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Cancel')}</button>
+                            <button type="submit" id="add-lead-submit-btn">${btnContent('plus', 'Add Client')}</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -240,8 +276,9 @@ export default class SalesPipelineView {
 
         const dialog = modal.querySelector('[role="dialog"]');
         const form = modal.querySelector('#add-lead-form');
-        const errEl = modal.querySelector('#add-lead-error');
         const submitBtn = modal.querySelector('#add-lead-submit-btn');
+        const submitIdleHtml = submitBtn.innerHTML;
+        const submitBusyHtml = btnContent('save', 'Saving…');
         const prevOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
 
@@ -275,41 +312,50 @@ export default class SalesPipelineView {
             if (e.target === modal) closeModal();
         });
         modal.querySelector('#add-lead-cancel-btn').addEventListener('click', closeModal);
+        modal.querySelector('#add-lead-close-x').addEventListener('click', closeModal);
 
-        const showError = (msg) => {
-            errEl.textContent = msg;
-            errEl.style.display = msg ? '' : 'none';
+        // Inline, per-field error text (instead of one banner) so the message sits next to the field it belongs to.
+        const formErrEl = form.querySelector('#add-lead-form-error');
+        const clearFieldErrors = () => form.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; });
+        const showFieldError = (fieldName, msg) => {
+            clearFieldErrors();
+            const input = form.querySelector(`[name="${fieldName}"]`);
+            const errId = input && input.getAttribute('aria-describedby');
+            const errEl = errId && form.querySelector(`#${errId}`);
+            if (errEl) errEl.textContent = msg;
+            if (input) input.focus();
         };
+        const labelFor = (el) => (el.closest('.form-group')?.querySelector('label')?.textContent || 'This field').replace(/\s*\*\s*$/, '');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            showError('');
-            // novalidate: run the browser checks ourselves so the first invalid field gets focus.
+            clearFieldErrors();
+            // novalidate: run the browser checks ourselves so the first invalid field gets focus and an inline message.
             const invalid = Array.from(form.elements).find(el => el.willValidate && !el.checkValidity());
             if (invalid) {
-                showError(invalid.name === 'email' ? 'Please enter a valid email address.' : `Please fill in ${invalid.closest('.form-group')?.querySelector('label')?.textContent || 'the required fields'}.`);
-                invalid.focus();
+                showFieldError(invalid.name, `${labelFor(invalid)} is required.`);
                 return;
             }
             const formData = new FormData(form);
             const val = (k) => String(formData.get(k) || '').trim();
-            if (!val('firstName')) {
-                showError('Please fill in First Name.');
-                form.querySelector('[name="firstName"]').focus();
+            const clientName = val('clientName');
+            if (!clientName) {
+                showFieldError('clientName', 'Client Name is required.');
                 return;
             }
-            const phone = val('phone'), email = val('email');
+            const { firstName, lastName } = splitClientName(clientName);
+            const phone = val('phone');
             const lead = {
                 clientId: val('clientId'),
                 rnNo: val('rnNo'),
-                firstName: val('firstName'),
-                lastName: val('lastName'),
-                name: fullName(val('firstName'), val('lastName')),
-                email,
+                firstName,
+                lastName,
+                name: clientName,
                 phone,
-                contactInfo: phone || email,
+                contactInfo: phone,
                 installationAddress: val('installationAddress'),
-                modeOfCommunication: val('modeOfCommunication'),
+                buildingType: val('buildingType'),
+                scopeOfWorks: val('scopeOfWorks'),
                 remarks: '',
                 followUp1: '',
                 followUp2: '',
@@ -317,12 +363,14 @@ export default class SalesPipelineView {
             };
             submitBtn.disabled = true;
             submitBtn.setAttribute('aria-busy', 'true');
+            submitBtn.innerHTML = submitBusyHtml;
             try {
                 await createSalesLead(lead);
             } catch (err) {
                 submitBtn.disabled = false;
                 submitBtn.removeAttribute('aria-busy');
-                showError('Error creating client: ' + (err && err.message ? err.message : err));
+                submitBtn.innerHTML = submitIdleHtml;
+                formErrEl.textContent = 'Error creating client: ' + (err && err.message ? err.message : err);
                 return;
             }
             form.reset();
@@ -332,7 +380,7 @@ export default class SalesPipelineView {
         });
 
         document.body.appendChild(modal);
-        form.querySelector('[name="firstName"]').focus();
+        form.querySelector('[name="clientName"]').focus();
     }
 
     /** Briefly highlight a freshly added row and scroll it into view (no-op if it is filtered out). */
@@ -417,9 +465,10 @@ export default class SalesPipelineView {
     }
 
     /** CRM Profile modal: view/edit every Excel field plus the progress checklist. */
-    openProfile(id, container) {
+    async openProfile(id, container) {
         const lead = (this.allLeads || []).find(l => l.id === id);
         if (!lead) return;
+        const scopeCatalog = await loadScopeCatalogNames();
 
         // Old leads only have `name`: prefill first/last by splitting on the first space (saved only on Save).
         let firstName = lead.firstName || '', lastName = lead.lastName || '';
@@ -449,7 +498,7 @@ export default class SalesPipelineView {
                 <form id="crm-profile-form" class="form-stack" novalidate>
                     <h4 class="crm-section-title">Client</h4>
                     <div class="field-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem;">
-                        <div class="form-group"><label>Client ID</label><input type="text" name="clientId" value="${val(lead.clientId)}"></div>
+                        <div class="form-group"><label>Installation No.</label><input type="text" name="clientId" value="${val(lead.clientId)}"></div>
                         <div class="form-group"><label>RN No.</label><input type="text" name="rnNo" value="${val(lead.rnNo)}"></div>
                         <div class="form-group"><label>First Name</label><input type="text" name="firstName" value="${val(firstName)}"></div>
                         <div class="form-group"><label>Last Name</label><input type="text" name="lastName" value="${val(lastName)}"></div>
@@ -461,11 +510,15 @@ export default class SalesPipelineView {
                             ${modeDatalist('crm-modes')}
                         </div>
                         <div class="form-group">
-                            <label>Building Type</label>
+                            <label>Type of Residency</label>
                             <select name="buildingType">
                                 <option value="">-- Select --</option>
-                                ${['Residential', 'Commercial', 'Industrial'].map(b => `<option value="${b}" ${lead.buildingType === b ? 'selected' : ''}>${b}</option>`).join('')}
+                                ${residencyOptionsHtml(lead.buildingType)}
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Scope of Works</label>
+                            <select name="scopeOfWorks">${scopeOptionsHtml(lead.scopeOfWorks, scopeCatalog)}</select>
                         </div>
                         <div class="form-group" style="grid-column: 1 / -1;"><label>Installation Address</label><input type="text" name="installationAddress" value="${val(lead.installationAddress)}"></div>
                     </div>
@@ -553,6 +606,7 @@ export default class SalesPipelineView {
                 contactInfo: phone || email,
                 modeOfCommunication: v('modeOfCommunication'),
                 buildingType: formData.get('buildingType'),
+                scopeOfWorks: formData.get('scopeOfWorks'),
                 installationAddress: v('installationAddress'),
                 stageChecklist,
                 remarks: formData.get('remarks') || '',
@@ -596,11 +650,12 @@ export default class SalesPipelineView {
 
             container.innerHTML = `
                 <table class="leads-table" style="width: 100%; text-align: left;">
-                    <thead><tr><th>Client ID</th><th>Name</th><th>Contact Number</th><th>Stage</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Installation No.</th><th>RN No.</th><th>Name</th><th>Contact Number</th><th>Stage</th><th>Actions</th></tr></thead>
                     <tbody>
                         ${leadsToRender.map(l => `
                             <tr class="lead-row" data-id="${l.id}">
-                                <td class="lead-client-id">${escapeHTML(l.clientId || '')}</td>
+                                <td class="lead-client-id">${escapeHTML(l.clientId) || '&mdash;'}</td>
+                                <td class="lead-rn-no">${escapeHTML(l.rnNo) || '&mdash;'}</td>
                                 <td>${escapeHTML(leadName(l))}</td>
                                 <td>${escapeHTML(l.phone || l.contactInfo || '')}</td>
                                 <td>
@@ -875,8 +930,9 @@ export default class SalesPipelineView {
             container.querySelectorAll('.dispatch-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = parseInt(e.target.dataset.id, 10);
+                    const lead = (this.allLeads || []).find(l => l.id === id);
                     const crewSelectHtml = await buildCrewSelectHtml('dispatch-assignee');
-                    
+
                     const modal = document.createElement('div');
                     modal.style.position = 'fixed';
                     modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
@@ -889,7 +945,7 @@ export default class SalesPipelineView {
                             <h3>Schedule & Dispatch Ocular</h3>
                             <div class="form-group">
                                 <label>RN Number</label>
-                                <input type="text" id="dispatch-rn" value="RN-${Date.now().toString().slice(-6)}">
+                                <input type="text" id="dispatch-rn" value="${escapeHTML(lead && lead.rnNo ? lead.rnNo : '')}">
                             </div>
                             <div class="form-group">
                                 <label>Assign Crew Member</label>
@@ -937,8 +993,9 @@ export default class SalesPipelineView {
             container.querySelectorAll('.dispatch-install-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = parseInt(e.target.dataset.id, 10);
+                    const lead = (this.allLeads || []).find(l => l.id === id);
                     const crewSelectHtml = await buildCrewSelectHtml('dispatch-install-assignee');
-                    
+
                     const modal = document.createElement('div');
                     modal.style.position = 'fixed';
                     modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
@@ -951,7 +1008,7 @@ export default class SalesPipelineView {
                             <h3>Schedule & Dispatch Installation</h3>
                             <div class="form-group">
                                 <label>Installation Number</label>
-                                <input type="text" id="dispatch-install-no" value="INST-${Date.now().toString().slice(-6)}">
+                                <input type="text" id="dispatch-install-no" value="${escapeHTML(lead && lead.clientId ? lead.clientId : '')}">
                             </div>
                             <div class="form-group">
                                 <label>Assign Crew Member</label>

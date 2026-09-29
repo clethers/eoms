@@ -884,7 +884,7 @@ button:has(> .ic) {
 /* ===== end icons ===== */
 
 /* ---- Clients: inline details row, progress timeline, CRM profile sections ---- */
-.leads-table .lead-client-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; white-space: nowrap; color: #475569; }
+.leads-table .lead-client-id, .leads-table .lead-rn-no { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; white-space: nowrap; color: #475569; }
 .lead-details__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; }
 .lead-details__section { margin-bottom: 0.75rem; }
 .lead-detail { min-width: 0; }
@@ -911,11 +911,57 @@ li.is-done > .lead-timeline__tick { background: var(--brand-green, #16a34a); bor
   .lead-timeline--edit > li { grid-template-columns: minmax(0, 1fr) auto; }
   .lead-timeline--edit input[type="date"] { grid-column: 1 / -1; width: 100%; }
 }
-/* Clients table: keep inside the card — wrap row actions, but keep Client IDs on one line */
+/* Clients table: keep inside the card — wrap row actions, but keep Installation No. / RN No. on one line */
 .leads-table .table-actions { flex-wrap: wrap; gap: 0.35rem; }
-.leads-table td.lead-client-id { white-space: nowrap; min-width: 9rem; }
+.leads-table td.lead-client-id, .leads-table td.lead-rn-no { white-space: nowrap; min-width: 9rem; }
 @media screen and (min-width: 641px) and (max-width: 1024px) {
   .main-view .leads-table { display: table; white-space: normal; }
 }
 /* Clients: brief highlight on a newly added row */
 .leads-table tr.lead-row--new > td { background: #ecfdf5; transition: background 0.6s ease; }
+
+/* ---- Add Client: portrait dialog (single column, sectioned, sticky footer) ---- */
+#add-client-dialog {
+  background: white; border-radius: 10px; width: 460px; max-width: 92vw !important;
+  max-height: 85vh !important; display: flex; flex-direction: column; overflow: hidden !important;
+}
+#add-client-dialog .add-client-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+  padding: 1.25rem 1.25rem 0.85rem; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;
+}
+#add-client-dialog .add-client-header h3 { margin: 0 0 0.2rem; }
+#add-client-dialog .add-client-hint { margin: 0; font-size: 0.8rem; color: #64748b; }
+#add-client-dialog .icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2rem; height: 2rem; padding: 0; border: none; border-radius: 6px;
+  background: transparent; color: #64748b; cursor: pointer;
+}
+#add-client-dialog .icon-btn:hover { background: #f1f5f9; color: #334155; }
+#add-client-dialog .icon-btn .ic { width: 1.1rem; height: 1.1rem; }
+#add-client-dialog form.form-stack { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+#add-client-dialog .add-client-scroll {
+  flex: 1; overflow-y: auto; padding: 1rem 1.25rem 0.25rem; display: flex; flex-direction: column; gap: 0;
+}
+#add-client-dialog .add-client-scroll .crm-section-title { margin: 1rem 0 0.5rem; }
+#add-client-dialog .add-client-scroll .crm-section-title:first-child { margin-top: 0; }
+#add-client-dialog .add-client-scroll .form-group {
+  margin: 0 0 0.65rem; display: flex; flex-direction: column; gap: 0.25rem;
+}
+#add-client-dialog input, #add-client-dialog select, #add-client-dialog textarea { margin: 0; }
+#add-client-dialog input, #add-client-dialog select { height: 44px; }
+#add-client-dialog textarea { min-height: 44px; }
+#add-client-dialog .field-error {
+  margin: 0.3rem 0 0; font-size: 0.8rem; color: #b91c1c; min-height: 0;
+}
+#add-client-dialog .field-error:empty { display: none; }
+#add-client-dialog .add-client-footer {
+  flex-shrink: 0; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.25rem; background: white;
+}
+#add-client-dialog .add-client-footer .field-error:not(:empty) { margin-bottom: 0.6rem; }
+#add-client-dialog .modal-actions button { height: 44px; }
+@media screen and (max-width: 640px) {
+  #add-client-dialog {
+    width: 100% !important; max-width: 100% !important; height: 100%; max-height: 100% !important;
+    border-radius: 0;
+  }
+}

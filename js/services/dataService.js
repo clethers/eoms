@@ -342,9 +342,11 @@ export async function dispatchOcularFromLead(leadId, teamId, rnNo, scheduledDate
   const inspectionData = {
     clientName: lead.name,
     contactNo: lead.contactInfo || lead.phone || lead.email || '',
+    installationNo: lead.clientId || '',
     locationAddress: lead.installationAddress,
     rnNo: rnNo,
-    scopeOfWorks: 'Site Inspection',
+    scopeOfWorks: lead.scopeOfWorks || 'Site Inspection',
+    typeOfResidency: lead.buildingType || '',
     status: 'ASSIGNED_PENDING_INSPECTION',
     assignedTeam: teamId,
     scheduledDate: scheduledDate, // NEW FIELD
