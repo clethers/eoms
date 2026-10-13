@@ -199,8 +199,7 @@ export default class UserManagementView {
                             <div class="form-group">
                                 <label for="set-password-confirm">Confirm password</label>
                                 <input type="password" id="set-password-confirm" autocomplete="new-password" minlength="8">
-                            </div>
-                            <p class="user-password-success" role="status" style="color: #065f46; display: none;">Password updated.</p>`,
+                            </div>`,
                         confirmLabel: btnContent('lock', 'Set password'),
                         confirmStyle: 'background-color: #0f766e; color: white;',
                         triggerBtn: btn,
@@ -210,9 +209,8 @@ export default class UserManagementView {
                             if (a.length < 8) throw new Error('Password must be at least 8 characters.');
                             if (a !== b) throw new Error('Passwords do not match.');
                             await setUserPassword(id, a);
-                            modal.querySelector('#set-password-new').value = '';
-                            modal.querySelector('#set-password-confirm').value = '';
-                            return { keepOpen: true };
+                            // Dialog closes right after onConfirm returns; show the notice once it is gone.
+                            setTimeout(() => alert(`Password updated for ${profile.fullName || profile.email || `User ${id}`}.`), 0);
                         }
                     });
                 });
@@ -354,18 +352,9 @@ export default class UserManagementView {
                 if (!matches()) return;
                 okBtn.disabled = true;
                 const err = modal.querySelector('.user-confirm-error');
-                const okMsg = modal.querySelector('.user-password-success');
-                if (okMsg) okMsg.style.display = 'none';
                 err.style.display = 'none';
                 try {
-                    const result = await onConfirm(modal);
-                    if (result && result.keepOpen) {
-                        const ok = modal.querySelector('.user-password-success');
-                        if (ok) ok.style.display = '';
-                        err.style.display = 'none';
-                        okBtn.disabled = false;
-                        return;
-                    }
+                    await onConfirm(modal);
                     close();
                 } catch (e) {
                     err.textContent = (e && e.message) || 'Something went wrong. Please try again.';
