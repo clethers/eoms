@@ -1,4 +1,4 @@
-import { getProfiles, createUser, removeUser, restoreUser, isRemovedUser, removeBlockReason } from '../../services/userService.js';
+import { getProfiles, createUser, removeUser, restoreUser, setUserPassword, isRemovedUser, removeBlockReason } from '../../services/userService.js';
 import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { escapeHTML } from '../../shared/security.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
@@ -107,6 +107,7 @@ export default class UserManagementView {
                                 <td>${p.status === 'ACTIVE' ? pill('#d1fae5', '#065f46', formatStatus(p.status)) : pill('#fee2e2', '#991b1b', formatStatus(p.status))}</td>
                                 <td>
                                     <button class="user-profile-btn btn-sm" data-id="${p.id}" title="Staff Profile" aria-label="Profile" style="background-color: #6366f1; color: white;">${btnContent('user', 'Profile')}</button>
+                                    <button type="button" class="user-password-btn btn-sm" data-id="${p.id}" title="Set a new password" aria-label="Set password for ${escapeHTML(p.fullName || p.email || '')}" style="background-color: #0f766e; color: white;">${btnContent('lock', 'Set password')}</button>
                                     ${p.status === 'ACTIVE' ? deleteBtn(p) : ''}
                                 </td>
                             </tr>
@@ -177,6 +178,41 @@ export default class UserManagementView {
                         onConfirm: async () => {
                             await restoreUser(id);
                             this.loadUsers(container);
+                        }
+                    });
+                });
+            });
+
+            container.querySelectorAll('.user-password-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.dataset.id, 10);
+                    const profile = allProfiles.find(p => p.id === id);
+                    if (!profile) return;
+                    this.openConfirm({
+                        title: `Set password for ${profile.fullName || profile.email || `User ${id}`}`,
+                        body: `
+                            <p>Choose a new password (at least 8 characters). Existing passwords can't be viewed. Share the new one with the user securely.</p>
+                            <div class="form-group">
+                                <label for="set-password-new">New password</label>
+                                <input type="password" id="set-password-new" autocomplete="new-password" minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label for="set-password-confirm">Confirm password</label>
+                                <input type="password" id="set-password-confirm" autocomplete="new-password" minlength="8">
+                            </div>
+                            <p class="user-password-success" role="status" style="color: #065f46; display: none;">Password updated.</p>`,
+                        confirmLabel: btnContent('lock', 'Set password'),
+                        confirmStyle: 'background-color: #0f766e; color: white;',
+                        triggerBtn: btn,
+                        onConfirm: async (modal) => {
+                            const a = modal.querySelector('#set-password-new').value;
+                            const b = modal.querySelector('#set-password-confirm').value;
+                            if (a.length < 8) throw new Error('Password must be at least 8 characters.');
+                            if (a !== b) throw new Error('Passwords do not match.');
+                            await setUserPassword(id, a);
+                            modal.querySelector('#set-password-new').value = '';
+                            modal.querySelector('#set-password-confirm').value = '';
+                            return { keepOpen: true };
                         }
                     });
                 });
@@ -318,8 +354,18 @@ export default class UserManagementView {
                 if (!matches()) return;
                 okBtn.disabled = true;
                 const err = modal.querySelector('.user-confirm-error');
+                const okMsg = modal.querySelector('.user-password-success');
+                if (okMsg) okMsg.style.display = 'none';
+                err.style.display = 'none';
                 try {
-                    await onConfirm();
+                    const result = await onConfirm(modal);
+                    if (result && result.keepOpen) {
+                        const ok = modal.querySelector('.user-password-success');
+                        if (ok) ok.style.display = '';
+                        err.style.display = 'none';
+                        okBtn.disabled = false;
+                        return;
+                    }
                     close();
                 } catch (e) {
                     err.textContent = (e && e.message) || 'Something went wrong. Please try again.';

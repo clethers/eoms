@@ -1,5 +1,6 @@
 import { COLLECTIONS, getAll, put, remove } from './localDb.js';
 import { recordAudit, diffFields } from './auditLogService.js';
+import { supabase } from './supabaseClient.js';
 
 const userLabel = (p) => `User · ${(p && (p.fullName || p.email)) || 'Unknown'}`;
 const USER_AUDIT_FIELDS = ['fullName', 'email', 'phone', 'role', 'status', 'department', 'deletedAt'];
@@ -51,6 +52,30 @@ export async function restoreUser(id) {
     return updateUser(id, { status: 'ACTIVE', deletedAt: null, deletedBy: null }, {
         eventType: 'RESTORE_USER', verb: 'User restored'
     });
+}
+
+/** Admin sets another user's password via the admin_set_user_password RPC. The password is never logged or audited. */
+export async function setUserPassword(id, newPassword) {
+    if (typeof newPassword !== 'string' || newPassword.length < 8) throw new Error('Password must be at least 8 characters.');
+    const profiles = await getProfiles();
+    const profile = profiles.find(p => p.id === id);
+    if (!profile) throw new Error('User not found');
+    const { error } = await supabase.rpc('admin_set_user_password', { target_profile_id: id, new_password: newPassword });
+    if (error) {
+        const missing = error.code === 'PGRST202' || error.code === '42883' || /could not find the function|does not exist/i.test(error.message || '');
+        if (missing) throw new Error('Password reset is not set up yet. Run the SQL migration first (supabase/admin_set_password.sql).');
+        if (error.code === '42501') throw new Error('Only an active admin can set passwords.');
+        if (error.code === 'P0002') throw new Error('This user has no linked login account.');
+        throw new Error('Could not set password. Please try again.');
+    }
+    await recordAudit({
+        category: 'ADMIN_RBAC',
+        eventType: 'PASSWORD_RESET',
+        resourceType: 'USER',
+        resourceId: profile.id,
+        resourceLabel: userLabel(profile),
+        description: `Password reset: ${profile.fullName || profile.email || id}`
+    }, { always: true });
 }
 
 export async function updateUser(id, updates, { eventType = 'UPDATE_USER', verb = 'User updated' } = {}) {

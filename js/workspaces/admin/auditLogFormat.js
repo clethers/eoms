@@ -21,6 +21,7 @@ const EVENT_LABELS = {
     CREATE_USER: 'User added',
     REMOVE_USER: 'User removed',
     RESTORE_USER: 'User restored',
+    PASSWORD_RESET: 'Password reset',
     UPDATE_ITEM: 'Item updated',
     LOGIN: 'Signed in',
     LOGOUT: 'Signed out',
