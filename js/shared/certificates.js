@@ -248,6 +248,58 @@ function ocularPhotos(r) {
     return out;
 }
 
+/**
+ * Plain-text (unescaped) site/electrical/materials details of an ocular record,
+ * mirroring sections 1-3 of the certificate, for on-screen summaries.
+ * Callers must escape the values. Empty values are omitted.
+ */
+export function getOcularDetails(record) {
+    const r = record || {};
+    const isNema = String(r.hasNema3r).toUpperCase() === 'YES';
+    const yn = (v, yes, no) => has(v) ? (String(v).toUpperCase() === 'YES' ? yes : no) : '';
+    const voltage = r.voltageSystem === 'Others' && has(r.voltageSpecify)
+        ? `Others — ${r.voltageSpecify}`
+        : r.voltageSystem;
+    const keep = rows => rows.filter(([, v]) => has(v)).map(([l, v]) => [l, String(v)]);
+
+    const site = keep([
+        ['Contact No.', r.contactNo],
+        ['Installation No.', r.installationNo],
+        ['GPS Coordinates', r.gpsPinCoordinates],
+        ['Type of Residency', r.typeOfResidency],
+        ['Retrofitting Work', r.workRetrofitting],
+        ['New Installation', r.workNewInstallation]
+    ]);
+
+    const electrical = keep([
+        ['Feeder Path', has(r.hasNema3r) ? (isNema ? 'NEMA 3R Enclosure' : 'Main Distribution Panelboard') : ''],
+        ['Voltage System', voltage],
+        ...(isNema ? [
+            ['NEMA 3R Breaker Rating', r.nema3rBreaker],
+            ['NEMA 3R Brand / Type', r.nema3rBrandType],
+            ['NEMA 3R Design', r.nema3rDesign],
+            ['NEMA 3R Mounting', r.nema3rMounting],
+            ['NEMA 3R Pole', r.nema3rPole]
+        ] : [
+            ['Main Breaker Rating', r.mainBreaker],
+            ['No. of Branches', r.noOfBranches],
+            ['Spare Breaker (40 AT, 2P)', yn(r.spareBreaker, 'YES (Available)', 'NO (Not Available)')],
+            ['Space Provision', yn(r.spaceProvision, 'YES (Provision Available)', 'NO (No Provision)')],
+            ['Breaker Brand / Type', r.breakerBrandType],
+            ['Breaker Design', r.breakerDesign],
+            ['Breaker Mounting', r.breakerMounting],
+            ['Breaker Pole', r.breakerPole],
+            ['Grounding System', yn(r.groundingSystem, 'YES (Existing)', 'NO (To Be Provided)')],
+            ['Grounding Rod Location', r.groundingRodLocation]
+        ]),
+        ['Charger Location', r.chargerLocation],
+        ['Estimated Distance', num(r.estimateDistance) > 0 ? `${r.estimateDistance} m` : '']
+    ]);
+
+    const materials = materialRows(r).map(m => ({ name: m.name, qty: String(m.qty) }));
+    return { site, electrical, materials };
+}
+
 export function buildOcularCertificateHtml(record, opts = {}) {
     const r = record || {};
     const approved = r.status === 'APPROVED';

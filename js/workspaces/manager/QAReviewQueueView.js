@@ -4,6 +4,7 @@ import { getActiveProfileId } from '../../components/ActiveProfilePicker.js';
 import { buildInspectionSummaryHtml } from '../../shared/inspectionSummary.js';
 import { escapeHTML } from '../../shared/security.js';
 import { btnContent } from '../../shared/icons.js';
+import { formatStatus } from '../../shared/statusFormatter.js';
 
 export default class QAReviewQueueView {
     async render() {
@@ -94,7 +95,7 @@ export default class QAReviewQueueView {
                     const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
                     
                     try {
-                        const { updateInspectionStatus, updateLeadStageByOcularId } = await import('../../services/dataService.js');
+                        const { updateInspectionStatus, ensureLeadForInspection } = await import('../../services/dataService.js');
                         await updateInspectionStatus(id, newStatus, {
                             qaReviewedBy: getActiveProfileId(),
                             qaReviewedAt: new Date().toISOString(),
@@ -102,15 +103,23 @@ export default class QAReviewQueueView {
                         });
                         
                         // Only approval advances the lead; a failure here must not block approval.
+                        let message = 'Status updated!';
                         if (action === 'approve') {
+                            message = 'Approved.';
                             try {
-                                await updateLeadStageByOcularId(id, 'SITE_VISIT_COMPLETED');
+                                const outcome = await ensureLeadForInspection(id, 'SITE_VISIT_COMPLETED');
+                                if (outcome && outcome.action !== 'skipped' && outcome.clientName) {
+                                    const stageLabel = formatStatus(outcome.stage);
+                                    message = outcome.action === 'created'
+                                        ? `Approved. New client created: ${outcome.clientName} (${stageLabel}) in Clients.`
+                                        : `Approved. ${outcome.clientName} is now at ${stageLabel} in Clients.`;
+                                }
                             } catch (stageErr) {
                                 console.error('Failed to update lead stage after approval:', stageErr);
                             }
                         }
-                        
-                        alert('Status updated!');
+
+                        alert(message);
                         this.loadQueue(container, previewModal, previewContent);
                         previewModal.style.display = 'none';
                     } catch(err) {

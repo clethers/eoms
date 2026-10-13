@@ -9,8 +9,8 @@ import { btnContent, icon } from '../../shared/icons.js';
 
 // Same three options as the ocular inspection form's Type of Residency select (no blank default).
 const RESIDENCY_OPTIONS = ['Residential', 'Commercial', 'Industrial'];
-// Same four defaults as the ocular inspection form's Scope of Works select; catalog items are appended after.
-const SCOPE_DEFAULT_OPTIONS = ['Site Inspection', 'Installation', 'Revisit', 'Checking'];
+// Same five defaults as the ocular inspection form's Scope of Works select; catalog items are appended after.
+const SCOPE_DEFAULT_OPTIONS = ['Site Inspection', 'Installation', 'Revisit', 'Checking', 'Charger Only'];
 
 async function loadScopeCatalogNames() {
     try {
@@ -23,7 +23,7 @@ async function loadScopeCatalogNames() {
 }
 
 function scopeOptionsHtml(selected, catalogExtra) {
-    return [...SCOPE_DEFAULT_OPTIONS, ...(catalogExtra || [])]
+    return [...new Set([...SCOPE_DEFAULT_OPTIONS, ...(catalogExtra || [])])]
         .map(s => `<option value="${escapeHTML(s)}" ${selected === s ? 'selected' : ''}>${escapeHTML(s)}</option>`).join('');
 }
 

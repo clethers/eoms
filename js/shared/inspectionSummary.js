@@ -1,6 +1,7 @@
 import { formatDateTime } from './dateFormat.js';
 import { escapeHTML, isValidBase64Image } from './security.js';
 import { toPhotoList } from './imageCompress.js';
+import { getOcularDetails } from './certificates.js';
 
 const OCULAR_PHOTO_SLOTS = [
     ['proposed_layout', 'Proposed Layout'],
@@ -29,9 +30,27 @@ function renderPhotoSection(item) {
     return blocks.trim() ? `<hr style="margin: 1rem 0;" /><h4>Site Photos</h4>${blocks}` : '';
 }
 
+function renderFieldRows(rows) {
+    return rows.map(([label, value]) => `<p><strong>${escapeHTML(label)}:</strong> ${escapeHTML(value)}</p>`).join('');
+}
+
+function renderDetailSections(item) {
+    const { site, electrical, materials } = getOcularDetails(item);
+    const parts = [];
+    if (site.length) parts.push(`<hr style="margin: 1rem 0;" /><h4>Site Details</h4>${renderFieldRows(site)}`);
+    if (electrical.length) parts.push(`<hr style="margin: 1rem 0;" /><h4>Electrical Assessment</h4>${renderFieldRows(electrical)}`);
+    if (materials.length) {
+        parts.push(`<hr style="margin: 1rem 0;" /><h4>Materials Estimate</h4>${renderFieldRows(materials.map(m => [m.name, m.qty]))}`);
+    }
+    if (item.qaNotes && String(item.qaNotes).trim()) {
+        parts.push(`<hr style="margin: 1rem 0;" /><h4>QA Notes</h4><p>${escapeHTML(item.qaNotes)}</p>`);
+    }
+    return parts.join('');
+}
+
 export function buildInspectionSummaryHtml(item) {
     if (!item) return '<p>No data available</p>';
-    
+
     return `
         <div class="inspection-summary">
             <h3>Inspection Summary: ${escapeHTML(item.rnNo || 'N/A')}</h3>
@@ -39,6 +58,7 @@ export function buildInspectionSummaryHtml(item) {
             <p><strong>Date:</strong> ${escapeHTML(formatDateTime(item.dateTime))}</p>
             <p><strong>Scope:</strong> ${escapeHTML(item.scopeOfWorks || 'N/A')}</p>
             <p><strong>Address:</strong> ${escapeHTML(item.locationAddress || 'N/A')}</p>
+            ${renderDetailSections(item)}
             <hr style="margin: 1rem 0;" />
             <h4>Signatures</h4>
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">

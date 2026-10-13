@@ -241,7 +241,7 @@ export default class OcularFormView {
     }
 
     renderStep1() {
-        const scopeOptions = this.scopes.map(s => `<option value="${s.itemName}" ${this.formData.scopeOfWorks === s.itemName ? 'selected' : ''}>${s.itemName}</option>`).join('');
+        const scopeOptions = this.scopes.filter(s => s.itemName !== 'Charger Only').map(s => `<option value="${s.itemName}" ${this.formData.scopeOfWorks === s.itemName ? 'selected' : ''}>${s.itemName}</option>`).join('');
         return `
             <div class="field-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
                 <div class="form-group"><label>Client Name *</label><input type="text" name="clientName" value="${this.formData.clientName || ''}" required></div>
@@ -258,6 +258,7 @@ export default class OcularFormView {
                         <option value="Installation" ${this.formData.scopeOfWorks === 'Installation' ? 'selected' : ''}>Installation</option>
                         <option value="Revisit" ${this.formData.scopeOfWorks === 'Revisit' ? 'selected' : ''}>Revisit</option>
                         <option value="Checking" ${this.formData.scopeOfWorks === 'Checking' ? 'selected' : ''}>Checking</option>
+                        <option value="Charger Only" ${this.formData.scopeOfWorks === 'Charger Only' ? 'selected' : ''}>Charger Only</option>
                         ${scopeOptions}
                     </select>
                 </div>

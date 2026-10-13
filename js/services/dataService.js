@@ -357,6 +357,57 @@ export async function updateLeadStageByOcularId(ocularId, newStage) {
   }
 }
 
+/**
+ * After QA approves an inspection: advance its linked client to `newStage`. A walk-in inspection has no
+ * client yet, so link it to an existing one (same RN No. / Client ID) or create one from the inspection.
+ */
+export async function ensureLeadForInspection(inspectionId, newStage) {
+  const leads = await getAll(COLLECTIONS.SALES_LEADS);
+  let action = 'updated';
+  // Includes archived leads: sales_leads.ocular_id is unique, so a second lead could not be linked anyway.
+  if (!leads.some(l => l.ocularId === inspectionId)) {
+    const insp = await get(COLLECTIONS.OCULAR_INSPECTIONS, inspectionId);
+    if (!insp) return { clientName: '', stage: newStage, action: 'skipped' };
+    const rnNo = String(insp.rnNo || '').trim();
+    const clientId = String(insp.installationNo || '').trim();
+    const dup = leads.find(l => !l.deletedAt && (
+      (rnNo && String(l.rnNo || '').trim() === rnNo) ||
+      (clientId && String(l.clientId || '').trim() === clientId)));
+    if (dup) {
+      // Already tied to a different inspection: leave it alone rather than overwrite the link or duplicate the client.
+      if (dup.ocularId) return { clientName: dup.name || '', stage: dup.stage, action: 'skipped' };
+      dup.ocularId = inspectionId;
+      await put(COLLECTIONS.SALES_LEADS, dup);
+      action = 'linked';
+    } else {
+      action = 'created';
+      const name = String(insp.clientName || '').trim();
+      const i = name.lastIndexOf(' ');
+      const contact = insp.contactNo || '';
+      await createSalesLead({
+        clientId,
+        rnNo,
+        firstName: i === -1 ? name : name.slice(0, i).trim(),
+        lastName: i === -1 ? '' : name.slice(i + 1).trim(),
+        name,
+        phone: contact,
+        contactInfo: contact,
+        installationAddress: insp.locationAddress || '',
+        buildingType: insp.typeOfResidency || '',
+        scopeOfWorks: insp.scopeOfWorks || '',
+        remarks: '',
+        followUp1: '',
+        followUp2: '',
+        ocularId: inspectionId,
+        createdBy: getActiveProfileId()
+      });
+    }
+  }
+  const saved = await updateLeadStageByOcularId(inspectionId, newStage);
+  if (!saved) return { clientName: '', stage: newStage, action: 'skipped' };
+  return { clientName: saved.name || '', stage: saved.stage, action };
+}
+
 export async function archiveSalesLead(id) {
   const record = await get(COLLECTIONS.SALES_LEADS, id);
   if (record) {
