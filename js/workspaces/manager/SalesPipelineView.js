@@ -264,6 +264,7 @@ export default class SalesPipelineView {
                             <label for="add-lead-phone">Contact No</label>
                             <input type="tel" id="add-lead-phone" name="phone" inputmode="tel" autocomplete="tel">
                         </div>
+                        ${field('add-lead-email', 'Email', (id, errId) => `<input type="email" id="${id}" name="email" inputmode="email" autocomplete="email" aria-describedby="${errId}">`)}
 
                         <h4 class="crm-section-title">Job references</h4>
                         ${field('add-lead-rnNo', 'RN No *', (id, errId) => `<input type="text" id="${id}" name="rnNo" required autocomplete="off" spellcheck="false" aria-describedby="${errId}">`)}
@@ -347,7 +348,7 @@ export default class SalesPipelineView {
             // novalidate: run the browser checks ourselves so the first invalid field gets focus and an inline message.
             const invalid = Array.from(form.elements).find(el => el.willValidate && !el.checkValidity());
             if (invalid) {
-                showFieldError(invalid.name, `${labelFor(invalid)} is required.`);
+                showFieldError(invalid.name, invalid.name === 'email' ? 'Please enter a valid email address, or leave it empty.' : `${labelFor(invalid)} is required.`);
                 return;
             }
             const formData = new FormData(form);
@@ -359,6 +360,7 @@ export default class SalesPipelineView {
             }
             const { firstName, lastName } = splitClientName(clientName);
             const phone = val('phone');
+            const email = val('email');
             const lead = {
                 clientId: val('clientId'),
                 rnNo: val('rnNo'),
@@ -366,7 +368,8 @@ export default class SalesPipelineView {
                 lastName,
                 name: clientName,
                 phone,
-                contactInfo: phone,
+                email,
+                contactInfo: phone || email,
                 installationAddress: val('installationAddress'),
                 buildingType: val('buildingType'),
                 scopeOfWorks: val('scopeOfWorks'),
