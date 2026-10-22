@@ -1,6 +1,8 @@
 import { getAll, COLLECTIONS } from '../../services/localDb.js';
 import { getCatalog } from '../../services/masterDataService.js';
 import { formatStatus } from '../../shared/statusFormatter.js';
+import { escapeHTML } from '../../shared/security.js';
+import { CANCEL_REASONS, isValidCancelReason } from '../../shared/cancelReasons.js';
 
 export default class AnalyticsDashboardView {
     async render() {
@@ -43,6 +45,17 @@ export default class AnalyticsDashboardView {
             const wonLeads = leads.filter(l => l.stage === 'QUOTE_ACCEPTED' || (l.stage && l.stage.includes('INSTALLATION')) || l.stage === 'JOB_CHECKOUT_COMPLETE').length;
             const lostLeads = leads.filter(l => l.stage === 'CANCELED').length;
             const winRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
+
+            // Cancellation reasons: count and share of all cancelled clients; legacy ones without a reason go under Unspecified.
+            const reasonCounts = {};
+            leads.filter(l => l.stage === 'CANCELED').forEach(l => {
+                const key = isValidCancelReason(l.cancelReason) ? l.cancelReason : '__UNSPECIFIED__';
+                reasonCounts[key] = (reasonCounts[key] || 0) + 1;
+            });
+            const reasonRows = [
+                ...CANCEL_REASONS.map(r => ({ label: r.label, count: reasonCounts[r.code] || 0 })),
+                { label: 'Unspecified', count: reasonCounts.__UNSPECIFIED__ || 0 }
+            ];
 
             // Leads by Stage for Pie Chart
             const stageCounts = {};
@@ -87,6 +100,18 @@ export default class AnalyticsDashboardView {
                             </div>
                         ` : `<p style="text-align: center; color: #10b981; margin-top: 4rem;">All inventory levels are healthy!</p>`}
                     </div>
+                </div>
+
+                <div style="border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; background: white; margin-top: 2rem;">
+                    <h3 style="margin-top: 0; text-align: center;">Cancellation reasons</h3>
+                    ${lostLeads > 0 ? `
+                        <table style="width: 100%; text-align: left;">
+                            <thead><tr><th>Reason</th><th>Cancelled clients</th><th>Share</th></tr></thead>
+                            <tbody>
+                                ${reasonRows.map(r => `<tr><td>${escapeHTML(r.label)}</td><td>${r.count}</td><td>${Math.round((r.count / lostLeads) * 100)}%</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    ` : `<p style="text-align: center; color: #64748b;">No cancelled clients.</p>`}
                 </div>
             `;
 

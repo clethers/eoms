@@ -1,6 +1,7 @@
 import * as db from './localDb.js';
 import { recordAudit, diffFields, diffChecklist, leadLabel } from './auditLogService.js';
 import { getCatalog } from './masterDataService.js';
+import { CANCEL_REASON_OTHER, isValidCancelReason, cancelReasonLabel } from '../shared/cancelReasons.js';
 
 import { getActiveProfile, getActiveProfileId } from '../components/ActiveProfilePicker.js';
 
@@ -278,7 +279,7 @@ export async function createSalesLead(leadData) {
 }
 
 /** Log a stage move (skipped when the stage did not change). */
-function auditStage(lead, oldStage, newStage, description) {
+function auditStage(lead, oldStage, newStage, description, extraDelta = {}) {
   return recordAudit({
     category: 'CUSTOMER_CARE',
     eventType: 'UPDATE_STAGE',
@@ -286,21 +287,43 @@ function auditStage(lead, oldStage, newStage, description) {
     resourceId: lead.id,
     resourceLabel: leadLabel(lead),
     description,
-    changesDelta: diffFields({ stage: oldStage }, { stage: newStage }, ['stage'])
+    changesDelta: { ...diffFields({ stage: oldStage }, { stage: newStage }, ['stage']), ...extraDelta }
   });
 }
 
-export async function updateSalesLeadStage(id, stage) {
+/** Moving to CANCELED needs `{ cancelReason, cancelNote }` (reason from CANCEL_REASONS; OTHER also needs a note). */
+export async function updateSalesLeadStage(id, stage, cancelInfo = {}) {
+  const cancelling = stage === 'CANCELED';
+  const reason = cancelling ? String(cancelInfo.cancelReason || '') : '';
+  const note = cancelling ? String(cancelInfo.cancelNote || '').trim() : '';
+  if (cancelling) {
+    if (!isValidCancelReason(reason)) throw new Error('Please choose a cancellation reason.');
+    if (reason === CANCEL_REASON_OTHER && !note) throw new Error('Please add a short note for "Other reason".');
+  }
+
   const lead = await get(COLLECTIONS.SALES_LEADS, id);
   if (!lead) throw new Error('Lead not found');
-  
+
   const oldStage = lead.stage;
+  const oldReason = lead.cancelReason;
   lead.stage = stage;
   lead[`stage${stage}At`] = new Date().toISOString();
   markChecklistDone(lead, stage);
+  // Reason fields only belong to a cancelled lead: set them on cancel, clear them when the client is reopened.
+  if (cancelling) {
+    lead.cancelReason = reason;
+    lead.cancelNote = note;
+  } else {
+    delete lead.cancelReason;
+    delete lead.cancelNote;
+  }
 
   const saved = await put(COLLECTIONS.SALES_LEADS, lead);
-  await auditStage(lead, oldStage, stage, `Stage updated from ${oldStage || 'No status'} to ${stage}`);
+  const reasonText = cancelling ? ` (reason: ${cancelReasonLabel(reason)}${note ? ` - ${note}` : ''})` : '';
+  const extraDelta = cancelling
+    ? { cancelReason: { from: cancelReasonLabel(oldReason), to: cancelReasonLabel(reason) }, ...(note ? { cancelNote: { from: '', to: note } } : {}) }
+    : {};
+  await auditStage(lead, oldStage, stage, `Stage updated from ${oldStage || 'No status'} to ${stage}${reasonText}`, extraDelta);
   return saved;
 }
 

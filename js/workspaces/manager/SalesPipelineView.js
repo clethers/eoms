@@ -6,6 +6,7 @@ import { formatStatus } from '../../shared/statusFormatter.js';
 import { getProfiles } from '../../services/userService.js';
 import { getItemsByCategory } from '../../services/masterDataService.js';
 import { btnContent, icon } from '../../shared/icons.js';
+import { CANCEL_REASONS, CANCEL_REASON_OTHER, cancelReasonLabel } from '../../shared/cancelReasons.js';
 
 // Same three options as the ocular inspection form's Type of Residency select (no blank default).
 const RESIDENCY_OPTIONS = ['Residential', 'Commercial', 'Industrial'];
@@ -111,6 +112,8 @@ function detailsModalHtml(l) {
             ${detailItem('Type of Residency', escapeHTML(l.buildingType))}
             ${detailItem('Scope of Works', escapeHTML(l.scopeOfWorks))}
             ${detailItem('Dispatch', l.ocularId ? 'Dispatched' : 'Pending')}
+            ${l.stage === 'CANCELED' ? detailItem('Cancellation Reason', escapeHTML(cancelReasonLabel(l.cancelReason))) : ''}
+            ${l.stage === 'CANCELED' && l.cancelNote ? detailItem('Cancellation Note', escapeHTML(l.cancelNote)) : ''}
             ${detailItem('Created', escapeHTML(created))}
         </div>
         <div class="lead-details__section"><div class="lead-detail__k">Progress</div>${timelineHtml(l)}</div>
@@ -402,6 +405,74 @@ export default class SalesPipelineView {
         row.classList.add('lead-row--new');
         row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         setTimeout(() => row.classList.remove('lead-row--new'), 2500);
+    }
+
+    /** Cancellation popup: resolves { cancelReason, cancelNote } once a reason is chosen (Other needs a note), or null if dismissed. */
+    askCancelReason(triggerEl) {
+        return new Promise((resolve) => {
+            const titleId = 'cancel-reason-title';
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
+            modal.style.zIndex = '1000';
+            modal.innerHTML = `
+                <div role="dialog" aria-modal="true" aria-labelledby="${titleId}" tabindex="-1"
+                     style="background: white; padding: 2rem; border-radius: 8px; width: 440px; max-width: 90vw;">
+                    <h3 id="${titleId}" style="margin-top: 0;">Cancel client</h3>
+                    <form id="cancel-reason-form" class="form-stack" novalidate>
+                        <div class="form-group">
+                            <label for="cancel-reason-select">Reason for cancellation *</label>
+                            <select id="cancel-reason-select" required>
+                                <option value="" selected disabled>Select a reason…</option>
+                                ${CANCEL_REASONS.map(r => `<option value="${r.code}">${escapeHTML(r.label)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cancel-reason-note">Note <span id="cancel-note-req"></span></label>
+                            <textarea id="cancel-reason-note" rows="2" placeholder="Optional details"></textarea>
+                        </div>
+                        <p class="field-error" id="cancel-reason-err" role="alert"></p>
+                        <div class="modal-actions">
+                            <button type="button" id="cancel-reason-back" style="background: #e2e8f0; color: #333;">${btnContent('x', 'Back')}</button>
+                            <button type="submit" style="background: #ef4444; color: white;">${btnContent('save', 'Cancel client')}</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            const prevOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            const finish = (result) => {
+                document.body.style.overflow = prevOverflow;
+                document.removeEventListener('keydown', onKeydown);
+                if (modal.parentNode) document.body.removeChild(modal);
+                resolve(result);
+            };
+            const onKeydown = (e) => { if (e.key === 'Escape') { e.preventDefault(); finish(null); } };
+            document.addEventListener('keydown', onKeydown);
+            modal.addEventListener('click', (e) => { if (e.target === modal) finish(null); });
+            modal.querySelector('#cancel-reason-back').addEventListener('click', () => finish(null));
+
+            const select = modal.querySelector('#cancel-reason-select');
+            const note = modal.querySelector('#cancel-reason-note');
+            const err = modal.querySelector('#cancel-reason-err');
+            select.addEventListener('change', () => {
+                const other = select.value === CANCEL_REASON_OTHER;
+                modal.querySelector('#cancel-note-req').textContent = other ? '*' : '(optional)';
+                note.placeholder = other ? 'Short note required' : 'Optional details';
+            });
+            modal.querySelector('#cancel-note-req').textContent = '(optional)';
+            modal.querySelector('#cancel-reason-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!select.value) { err.textContent = 'Please choose a cancellation reason.'; select.focus(); return; }
+                if (select.value === CANCEL_REASON_OTHER && !note.value.trim()) { err.textContent = 'Please add a short note for "Other reason".'; note.focus(); return; }
+                finish({ cancelReason: select.value, cancelNote: note.value.trim() });
+            });
+
+            document.body.appendChild(modal);
+            select.focus();
+        });
     }
 
     /** Read-only Details popup: client info, progress timeline and remarks. Edit hands off to the CRM Profile modal. */
@@ -753,7 +824,12 @@ export default class SalesPipelineView {
                     const newStage = e.target.value;
                     if (!newStage) return; // placeholder re-selected: no-op, don't save
                     try {
-                        await updateSalesLeadStage(id, newStage);
+                        let cancelInfo;
+                        if (newStage === 'CANCELED') {
+                            cancelInfo = await this.askCancelReason(e.target);
+                            if (!cancelInfo) { this.refreshLeads(container); return; } // dismissed: put the dropdown back
+                        }
+                        await updateSalesLeadStage(id, newStage, cancelInfo);
                         this.refreshLeads(container);
                     } catch(err) {
                         alert('Error updating stage: ' + err.message);

@@ -76,7 +76,7 @@ const FIELD_LABELS = {
     clientId: 'Installation No.', rnNo: 'RN No.', firstName: 'First Name', lastName: 'Last Name', name: 'Client Name',
     phone: 'Contact Number', email: 'Email', contactInfo: 'Contact Info', modeOfCommunication: 'Mode of Communication',
     buildingType: 'Type of Residency', scopeOfWorks: 'Scope of Works', installationAddress: 'Installation Address',
-    remarks: 'Remarks', followUp1: 'Follow-up 1', followUp2: 'Follow-up 2', stage: 'Stage', status: 'Status',
+    remarks: 'Remarks', followUp1: 'Follow-up 1', followUp2: 'Follow-up 2', stage: 'Stage', cancelReason: 'Cancellation Reason', cancelNote: 'Cancellation Note', status: 'Status',
     qaNotes: 'Review Notes', fullName: 'Name', role: 'Role', department: 'Department', itemName: 'Item Name',
     category: 'Category', currentStock: 'Current Stock', unitPrice: 'Unit Price', scheduledDate: 'Scheduled Date',
     assignedTeam: 'Assigned Crew', deletedAt: 'Removed On'
